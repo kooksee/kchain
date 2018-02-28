@@ -1,0 +1,50 @@
+default:
+  desc: 帮助文件
+  cmds:
+    - echo {{.GERMAN}}
+    - task -l
+
+deps:
+  desc: 下载依赖包
+  dir: .vendor/src
+  cmds:
+    - ../../scripts/deps.sh
+
+build:
+  desc: 编译应用
+  cmds:
+    - GOPATH="`pwd`/.vendor" go build cmd/main.go
+
+build_linux:
+  desc: 交叉编译成linux应用
+  cmds:
+    - GOPATH="`pwd`/.vendor" CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build cmd/main.go
+  env:
+      hallo: welt
+
+docker_build:
+  desc: 构建docker镜像
+  cmds:
+      - task: build_linux
+      - docker build -t kchain .
+      - docker tag kchain registry.yuanbenlian.com/yuanben/kchain
+
+docker_push:
+  desc: docker push
+  cmds:
+      - docker push registry.yuanbenlian.com/yuanben/kchain
+
+docker_test:
+  desc: kchain docker test
+  cmds:
+    - ls * | grep example_data || mkdir example_data
+    - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 9000:9000 kchain init
+    - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 9000:9000 kchain
+    - rm -rf example_data
+
+
+docker_services_test:
+  desc: kchain services docker test
+  cmds:
+      - docker run --rm -it -v `pwd`/d1:/kdata -p 46656:46656 -p 9000:9000 kchain /app/kchain --home /kdata
+
