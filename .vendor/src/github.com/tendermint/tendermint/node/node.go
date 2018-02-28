@@ -90,19 +90,19 @@ func DefaultNewNode(config *cfg.Config, logger log.Logger) (*Node, error) {
 type Node struct {
 	cmn.BaseService
 
-	// config
-	config        *cfg.Config
-	genesisDoc    *types.GenesisDoc   // initial validator set
-	privValidator types.PrivValidator // local node's validator key
+						     // config
+	config           *cfg.Config
+	genesisDoc       *types.GenesisDoc           // initial validator set
+	privValidator    types.PrivValidator         // local node's validator key
 
-	// network
-	privKey          crypto.PrivKeyEd25519   // local node's p2p key
-	sw               *p2p.Switch             // p2p connections
-	addrBook         *p2p.AddrBook           // known peers
-	trustMetricStore *trust.TrustMetricStore // trust metrics for all peers
+						     // network
+	privKey          crypto.PrivKeyEd25519       // local node's p2p key
+	sw               *p2p.Switch                 // p2p connections
+	addrBook         *p2p.AddrBook               // known peers
+	trustMetricStore *trust.TrustMetricStore     // trust metrics for all peers
 
-	// services
-	eventBus         *types.EventBus // pub/sub for services
+						     // services
+	eventBus         *types.EventBus             // pub/sub for services
 	stateDB          dbm.DB
 	blockStore       *bc.BlockStore              // store the blockchain to disk
 	bcReactor        *bc.BlockchainReactor       // for fast-syncing
@@ -117,12 +117,13 @@ type Node struct {
 }
 
 // NewNode returns a new, ready to go, Tendermint Node.
-func NewNode(config *cfg.Config,
-	privValidator types.PrivValidator,
-	clientCreator proxy.ClientCreator,
-	genesisDocProvider GenesisDocProvider,
-	dbProvider DBProvider,
-	logger log.Logger) (*Node, error) {
+func NewNode(
+config *cfg.Config,
+privValidator types.PrivValidator,
+clientCreator proxy.ClientCreator,
+genesisDocProvider GenesisDocProvider,
+dbProvider DBProvider,
+logger log.Logger) (*Node, error) {
 
 	// Get BlockStore
 	blockStoreDB, err := dbProvider(&DBContext{"blockstore", config})
@@ -171,7 +172,10 @@ func NewNode(config *cfg.Config,
 	state = sm.LoadState(stateDB)
 
 	// Generate node PrivKey
-	privKey := crypto.GenPrivKeyEd25519()
+	// privKey := crypto.GenPrivKeyEd25519()
+	// 把validator的PriKey变成node的PriKey
+	pvfs := types.LoadOrGenPrivValidatorFS(config.PrivValidatorFile())
+	privKey := pvfs.PrivKey.Unwrap().(crypto.PrivKeyEd25519)
 
 	// Decide whether to fast-sync or not
 	// We don't fast-sync when the only validator is us.

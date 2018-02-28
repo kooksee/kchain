@@ -66,10 +66,12 @@ func NewRunNodeCmd() *cobra.Command {
 
 			abci_app := abci.Run()
 
+			pvfs := types.LoadOrGenPrivValidatorFS(config.PrivValidatorFile())
+
 			// 启动abci服务和tendermint节点
 			n, err := nm.NewNode(
 				config,
-				types.LoadOrGenPrivValidatorFS(config.PrivValidatorFile()),
+				pvfs,
 				proxy.NewLocalClientCreator(abci_app),
 				nm.DefaultGenesisDocProviderFunc(config),
 				nm.DefaultDBProvider,
@@ -78,6 +80,13 @@ func NewRunNodeCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("Failed to create node: %v", err)
 			}
+
+
+
+			//if otherEd, ok := pvfs.PrivKey.Unwrap().(crypto.PrivKeyEd25519); ok {
+			//	logger.Error(fmt.Sprintf("save key %s ok", hex.EncodeToString(otherEd.Bytes())))
+			//	n.Switch().SetNodePrivKey(otherEd)
+			//}
 
 			// 新加入节点的过滤逻辑
 			n.Switch().SetPubKeyFilter(abci_app.PubKeyFilter)

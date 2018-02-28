@@ -56,8 +56,10 @@ func (app *PersistentApplication) SetLogger(l log.Logger) {
 
 // 新节点连接过滤
 func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKeyEd25519) error {
-	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(pk.Wrap().Bytes()))
+	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(pk.Bytes()))
+
 	if !state.Has(key) {
+		logger.Error("Please contact the administrator to join the node")
 		return errors.New("Please contact the administrator to join the node")
 	}
 	return nil
@@ -141,8 +143,6 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 			}
 		}
 	case "validator":
-		logger.Error(tx.PubKey)
-		logger.Error(app.GenesisValidator)
 		if strings.Compare(tx.PubKey, app.GenesisValidator) != 0 {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
@@ -232,15 +232,6 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 
 // Save the validators in the merkle tree
 func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.ResponseInitChain {
-	logger.Error(req.String())
-	logger.Error("InitChain")
-
-	for _, v := range cfg().Node.GenesisDoc().Validators {
-		// 最高权限拥有者
-		if v.Power == 10 {
-			app.GenesisValidator = hex.EncodeToString(v.PubKey.Bytes())
-		}
-	}
 
 	for _, v := range req.Validators {
 		// 最高权限拥有者
@@ -306,6 +297,8 @@ func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
 		}
 		state.Set(key, value.Bytes())
+
+		logger.Error(fmt.Sprintf("save key %s ok", key))
 	}
 
 	app.ValUpdates = append(app.ValUpdates, v)
