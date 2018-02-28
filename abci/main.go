@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"strconv"
+	"encoding/hex"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tmlibs/log"
 	"github.com/tendermint/iavl"
 	"github.com/tendermint/abci/types"
@@ -13,9 +16,6 @@ import (
 	"kchain/types/code"
 	"kchain/types/cnst"
 	kcfg "kchain/types/cfg"
-	"encoding/hex"
-	"github.com/pkg/errors"
-	"strconv"
 )
 
 //-----------------------------------------
@@ -59,8 +59,9 @@ func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKeyEd25519) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(pk.Bytes()))
 
 	if !state.Has(key) {
-		logger.Error("Please contact the administrator to join the node")
-		return errors.New("Please contact the administrator to join the node")
+		m := "Please contact the administrator to join the node"
+		logger.Error(m)
+		panic(m)
 	}
 	return nil
 }
