@@ -2,20 +2,21 @@ package abci
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
-	"strconv"
 	"encoding/hex"
-	"github.com/pkg/errors"
-	"github.com/tendermint/tmlibs/log"
-	"github.com/tendermint/iavl"
-	"github.com/tendermint/abci/types"
-	dbm "github.com/tendermint/tmlibs/db"
-	crypto "github.com/tendermint/go-crypto"
+	"fmt"
+	"strconv"
+	"strings"
 
-	"kchain/types/code"
-	"kchain/types/cnst"
+	"github.com/pkg/errors"
+	"github.com/tendermint/abci/types"
+	"github.com/tendermint/go-crypto"
+	"github.com/tendermint/iavl"
+	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
+
 	kcfg "kchain/types/cfg"
+	"kchain/types/cnst"
+	"kchain/types/code"
 )
 
 //-----------------------------------------
@@ -27,6 +28,7 @@ type PersistentApplication struct {
 	ValUpdates       []*types.Validator
 	GenesisValidator string
 	blockHeader      *types.Header
+	blockhash        []byte
 }
 
 func Run() *PersistentApplication {
@@ -89,24 +91,39 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 	if err := tx.FromBytes(txBytes); err != nil {
 		return types.ResponseDeliverTx{
 			Code: code.ErrTransactionDecode.Code,
-			Log:err.Error(),
+			Log:  err.Error(),
 		}
 	}
 
 	switch tx.Path {
 	case "db":
-		data := fmt.Sprintf("%d,,%s", app.blockHeader.Height, tx.Value)
-		state.Set([]byte("db:" + tx.Key), []byte(data))
+
+		d := new(map[string]interface{})
+		json.Unmarshal([]byte(tx.Value), &d)
+		data, _ := json.MarshalToString(map[string]interface{}{
+			"block_height": app.blockHeader.Height,
+			"block_hash":   hex.EncodeToString(app.blockhash),
+			"time":         app.blockHeader.Time,
+			"data":         d,
+		})
+		state.Set([]byte("db:"+tx.Key), []byte(data))
 	case "const_db":
-		data := fmt.Sprintf("%d,,%s", app.blockHeader.Height, tx.Value)
-		state.Set([]byte("const_db:" + tx.Key), []byte(data))
+		d := new(map[string]interface{})
+		json.Unmarshal([]byte(tx.Value), &d)
+		data, _ := json.MarshalToString(map[string]interface{}{
+			"block_height": app.blockHeader.Height,
+			"block_hash":   hex.EncodeToString(app.blockhash),
+			"time":         app.blockHeader.Time,
+			"data":         d,
+		})
+		state.Set([]byte("const_db:"+tx.Key), []byte(data))
 	case "validator":
 		d, _ := hex.DecodeString(tx.Key)
 		d1, _ := strconv.Atoi(tx.Value)
-		if err := app.updateValidator(&types.Validator{PubKey:d, Power:int64(d1)}); err != nil {
+		if err := app.updateValidator(&types.Validator{PubKey: d, Power: int64(d1)}); err != nil {
 			return types.ResponseDeliverTx{
 				Code: code.ErrValidatorAdd.Code,
-				Log:err.Error(),
+				Log:  err.Error(),
 			}
 		}
 	}
@@ -122,7 +139,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 	if err := tx.FromBytes(txBytes); err != nil {
 		return types.ResponseCheckTx{
 			Code: code.ErrTransactionDecode.Code,
-			Log:err.Error(),
+			Log:  err.Error(),
 		}
 	}
 
@@ -130,7 +147,15 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 	if err := tx.Verify(); err != nil {
 		return types.ResponseCheckTx{
 			Code: code.ErrTransactionVerify.Code,
-			Log:err.Error(),
+			Log:  err.Error(),
+		}
+	}
+
+	// Value必须是json数据
+	if err := json.Unmarshal([]byte(tx.Value), new(map[string]interface{})); err != nil {
+		return types.ResponseCheckTx{
+			Code: code.ErrJsonDecode.Code,
+			Log:  err.Error(),
 		}
 	}
 
@@ -140,33 +165,33 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 		if state.Has([]byte("const_db:" + tx.Key)) {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
-				Log:fmt.Sprintf("the key %s already exists", tx.Key),
+				Log:  fmt.Sprintf("the key %s already exists", tx.Key),
 			}
 		}
 	case "validator":
 		if strings.Compare(tx.PubKey, app.GenesisValidator) != 0 {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
-				Log:"Please contact the administrator to add validator",
+				Log:  "Please contact the administrator to add validator",
 			}
 		}
 		if _, err := hex.DecodeString(tx.Key); err != nil {
 			return types.ResponseCheckTx{
 				Code: code.ErrHexDecode.Code,
-				Log:err.Error(),
+				Log:  err.Error(),
 			}
 		}
 		if _, err := strconv.Atoi(tx.Value); err != nil {
 			return types.ResponseCheckTx{
 				Code: code.ErrJsonDecode.Code,
-				Log:err.Error(),
+				Log:  err.Error(),
 			}
 		}
 
 	default:
 		return types.ResponseCheckTx{
-			Code:code.ErrUnknownMathod.Code,
-			Log:"unknown path",
+			Code: code.ErrUnknownMathod.Code,
+			Log:  "unknown path",
 		}
 	}
 
@@ -181,7 +206,7 @@ func (app *PersistentApplication) Commit() (res types.ResponseCommit) {
 	if appHash, err := state.SaveVersion(height); err != nil {
 		panic(err)
 	} else {
-		logger.Info("Commit block", "height", height, "root", appHash)
+		logger.Info("Commit block", "height", height, "root", hex.EncodeToString(appHash))
 		return types.ResponseCommit{Code: code.Ok.Code, Data: appHash}
 	}
 }
@@ -189,35 +214,28 @@ func (app *PersistentApplication) Commit() (res types.ResponseCommit) {
 func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.ResponseQuery) {
 	var (
 		path = reqQuery.Path
-		key = reqQuery.Data
+		key  = reqQuery.Data
 	)
 
 	switch path {
 	case "db":
 		index, value := state.Get([]byte("db:" + string(key)))
-		data := strings.Split(string(value), ",,")
 		res.Code = types.CodeTypeOK
 		res.Index = int64(index)
 		res.Key = key
-		res.Value = []byte(data[1])
-		h, _ := strconv.Atoi(data[0])
-		res.Height = int64(h)
+		res.Value = value
 		if value != nil {
 			res.Log = "exists"
 		} else {
 			res.Log = "does not exist"
 		}
 
-
 	case "const_db":
 		index, value := state.Get([]byte("const_db:" + string(key)))
-		data := strings.Split(string(value), ",,")
 		res.Code = types.CodeTypeOK
 		res.Index = int64(index)
 		res.Key = key
-		res.Value = []byte(data[1])
-		h, _ := strconv.Atoi(data[0])
-		res.Height = int64(h)
+		res.Value = value
 		if value != nil {
 			res.Log = "exists"
 		} else {
@@ -250,9 +268,14 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 func (app *PersistentApplication) BeginBlock(req types.RequestBeginBlock) types.ResponseBeginBlock {
 	app.ValUpdates = make([]*types.Validator, 0)
 	app.blockHeader = req.Header
+	app.blockhash = req.Hash
 
-	d, _ := json.MarshalToString(req)
-	logger.Error(d)
+	//logger.Error(hex.EncodeToString(req.Hash))
+	//logger.Error(hex.EncodeToString(req.Header.LastCommitHash))
+	//logger.Error(hex.EncodeToString(req.Header.DataHash))
+	//logger.Error(hex.EncodeToString(req.Header.ValidatorsHash))
+	//logger.Error(hex.EncodeToString(req.Header.AppHash))
+	//logger.Error(hex.EncodeToString(req.Header.LastBlockID.Hash))
 
 	return types.ResponseBeginBlock{}
 }
@@ -263,10 +286,10 @@ func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.Resp
 
 //---------------------------------------------
 
-
 func isValidatorTx(tx []byte) bool {
 	return strings.HasPrefix(string(tx), cnst.ValidatorPrefix)
 }
+
 // update validators
 func (app *PersistentApplication) Validators() (validators []*types.Validator) {
 	state.Iterate(func(key, value []byte) bool {

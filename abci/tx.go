@@ -28,7 +28,7 @@ func (t *Transaction) Verify() error {
 
 	// 事务超过两分钟没有被确认，则认定为超时
 	if time.Now().Unix() - t.Timestamp > int64(time.Minute * 1) {
-		return errors.New("transaction time out")
+		return errors.New("transaction timeout")
 	}
 
 	d, _ := hex.DecodeString(t.PubKey)

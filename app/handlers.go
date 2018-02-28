@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	tdata "github.com/tendermint/go-wire/data"
-	crypto "github.com/tendermint/go-crypto"
+	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/tendermint/types"
 
 	kts "kchain/types"
@@ -19,7 +19,7 @@ func metadata_post(c *gin.Context) {
 	if err := c.ShouldBindJSON(md); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 		return
 	}
@@ -29,11 +29,11 @@ func metadata_post(c *gin.Context) {
 
 	// 构建tx
 	tx := &kts.Transaction{
-		PubKey:hex.EncodeToString(pvfs.PubKey.Bytes()),
-		Key:md.DNA,
-		Value:string(md.Dumps()),
-		Path:"db",
-		Timestamp:time.Now().Unix(),
+		PubKey:    hex.EncodeToString(pvfs.PubKey.Bytes()),
+		Key:       md.DNA,
+		Value:     string(md.Dumps()),
+		Path:      "db",
+		Timestamp: time.Now().Unix(),
 	}
 	// 签名
 	tx.Signature = hex.EncodeToString(pvfs.PrivKey.Sign([]byte(fmt.Sprintf("%s%d%s", tx.Key, tx.Timestamp, tx.Value))).Bytes())
@@ -41,15 +41,15 @@ func metadata_post(c *gin.Context) {
 	if res, err := kcfg.Abci().BroadcastTxCommit(types.Tx(string(tx.Dumps()))); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 	} else {
 
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":gin.H{
-				"dna":md.DNA,
-				"tx":res,
+			"data": gin.H{
+				"dna": md.DNA,
+				"tx":  res,
 			},
 		})
 	}
@@ -62,7 +62,7 @@ func metadata_get(c *gin.Context) {
 	if dna == "" {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"data":"id is null",
+			"data": "id is null",
 		})
 		return
 	}
@@ -70,15 +70,14 @@ func metadata_get(c *gin.Context) {
 	if res, err := kcfg.Abci().ABCIQuery("db", tdata.Bytes(dna)); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 	} else {
-		t := &kts.Metadata{}
-		t.BlockHeight = res.Response.Height
-		json.Unmarshal(res.Response.Value, t)
+		t := map[string]interface{}{}
+		json.Unmarshal(res.Response.Value, &t)
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":t,
+			"data": t,
 		})
 	}
 
@@ -91,18 +90,18 @@ func validator_post(c *gin.Context) {
 	if err := c.ShouldBindJSON(t); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 		return
 	}
 
 	// 构建tx
 	tx := &kts.Transaction{
-		PubKey:hex.EncodeToString(pvfs.PubKey.Bytes()),
-		Key:"01" + t.PubKey,
-		Value:t.Power,
-		Path:"validator",
-		Timestamp:time.Now().Unix(),
+		PubKey:    hex.EncodeToString(pvfs.PubKey.Bytes()),
+		Key:       "01" + t.PubKey,
+		Value:     t.Power,
+		Path:      "validator",
+		Timestamp: time.Now().Unix(),
 	}
 
 	// 签名
@@ -111,12 +110,12 @@ func validator_post(c *gin.Context) {
 	if res, err := kcfg.Abci().BroadcastTxCommit(types.Tx(tx.Dumps())); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":res,
+			"data": res,
 		})
 	}
 }
@@ -127,31 +126,31 @@ func license_post(c *gin.Context) {
 		logger.Error(err.Error())
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 		return
 	}
 
 	// 构建tx
 	tx := &kts.Transaction{
-		PubKey:hex.EncodeToString(pvfs.PubKey.Bytes()),
-		Key:t.Type,
-		Value:string(t.Dumps()),
-		Path:"const_db",
-		Timestamp:time.Now().Unix(),
+		PubKey:    hex.EncodeToString(pvfs.PubKey.Bytes()),
+		Key:       t.Type,
+		Value:     string(t.Dumps()),
+		Path:      "const_db",
+		Timestamp: time.Now().Unix(),
 	}
 	// 签名
 	tx.Signature = hex.EncodeToString(pvfs.PrivKey.Sign([]byte(fmt.Sprintf("%s%d%s", tx.Key, tx.Timestamp, tx.Value))).Bytes())
-
-	if res, err := kcfg.Abci().BroadcastTxCommit(types.Tx(tx.Dumps())); err != nil {
+	logger.Error(string(tx.Dumps()))
+	if res, err := kcfg.Abci().BroadcastTxCommit(types.Tx(string(tx.Dumps()))); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":res,
+			"data": res,
 		})
 	}
 	return
@@ -162,7 +161,7 @@ func license_get(c *gin.Context) {
 	if name == "" {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":"id is null",
+			"data": "id is null",
 		})
 		return
 	}
@@ -170,15 +169,14 @@ func license_get(c *gin.Context) {
 	if res, err := kcfg.Abci().ABCIQuery("const_db", tdata.Bytes(name)); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": "error",
-			"msg":err.Error(),
+			"msg":  err.Error(),
 		})
 	} else {
-		t := &kts.License{}
-		t.BlockHeight = res.Response.Height
-		json.Unmarshal(res.Response.Value, t)
+		t := map[string]interface{}{}
+		json.Unmarshal(res.Response.Value, &t)
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":t,
+			"data": t,
 		})
 	}
 	return
