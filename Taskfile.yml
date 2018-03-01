@@ -1,26 +1,29 @@
 default:
   desc: 帮助文件
   cmds:
-    - echo {{.GERMAN}}
     - task -l
 
 deps:
   desc: 下载依赖包
-  dir: .vendor/src
+  dir: src
   cmds:
-    - ../../scripts/deps.sh
+    - ../scripts/deps.sh
+
+install_gopm:
+  desc: 安装gopm
+    cmds:
+      - go get -u github.com/gpmgo/gopm
 
 build:
   desc: 编译应用
   cmds:
-    - GOPATH="`pwd`/.vendor" go build cmd/main.go
+    - GOPATH=`pwd` go build cmd/main.go
 
 build_linux:
   desc: 交叉编译成linux应用
   cmds:
-    - GOPATH="`pwd`/.vendor" CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build cmd/main.go
-  env:
-      hallo: welt
+    - GOPATH=`pwd` CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build cmd/main.go
+
 
 docker_build:
   desc: 构建docker镜像
@@ -47,4 +50,3 @@ docker_services_test:
   desc: kchain services docker test
   cmds:
       - docker run --rm -it -v `pwd`/d1:/kdata -p 46656:46656 -p 9000:9000 kchain /app/kchain --home /kdata
-

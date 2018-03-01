@@ -50,6 +50,8 @@ gopkg.in/go-playground/validator.v9
 github.com/pkg/errors
 github.com/go-playground/universal-translator
 github.com/go-playground/locales
+
+github.com/v2pro/plz/reflect2
 """
 
 echo $a | xargs gopm get -l

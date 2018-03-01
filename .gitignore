@@ -13,10 +13,7 @@
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 .idea
-.vendor/pkg
-.vendor/src/kchain
-example
-d1
 main
-kchain
 test
+pkg
+src/kchain

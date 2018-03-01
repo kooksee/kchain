@@ -10,24 +10,14 @@ k链现在只有最基础的数据存储功能,后期会添加账户体系等
 2. 智能合约层
 
 
-## autoenv安装
-
-```
-https://github.com/direnv/direnv
-https://github.com/direnv/direnv/releases
-```
-
 ## gopm安装
 
 ```
 go get -u -v github.com/go-task/task/cmd/task
-https://github.com/gpmgo/gopm/
-go get -u github.com/gpmgo/gopm
 ```
 
 ## 下载依赖
 
 ```
-gopm get -s 依赖
-gopm get -g 依赖
+task deps
 ```
