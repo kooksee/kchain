@@ -1,23 +1,35 @@
 # kchain
 基于tendermint的区块链
 
-k链是基于tendermint底层的联盟链
-k链是结合了tendermint,abci,web三者的抽象,共同打包成一个完整的binary
-k链现在只有最基础的数据存储功能,后期会添加账户体系等
 
-待完成:
-1. 验证节点的管理
-2. 智能合约层
+## 项目初始化
 
-
-## gopm安装
+1. 请安装task项目管理工具
 
 ```
 go get -u -v github.com/go-task/task/cmd/task
 ```
 
-## 下载依赖
+2. 初始化项目
+
+```
+task init
+```
+
+3. 安装依赖
 
 ```
 task deps
 ```
+其他依赖请把依赖添加到`scripts/deps.sh中`
+
+4. Goland作为开发工具配置
+请把当前目录`pwd`配置为`Project GOPATH`
+
+
+## 编译
+
+```
+task build
+```
+

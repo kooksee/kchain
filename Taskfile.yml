@@ -9,7 +9,7 @@ deps:
   cmds:
     - ../scripts/deps.sh
 
-install_gopm:
+init:
   desc: 安装gopm
     cmds:
       - go get -u github.com/gpmgo/gopm
