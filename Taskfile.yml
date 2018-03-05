@@ -56,4 +56,4 @@ docker_test:
 docker_services_test:
   desc: kchain services docker test
   cmds:
-      - docker run --rm -it -v `pwd`/d1:/kdata -p 46656:46656 -p 9000:9000 kchain /app/kchain --home /kdata
+      - docker run --rm -it -v `pwd`/test/d:/kdata -p 46656:46656 -p 9000:9000 kchain
