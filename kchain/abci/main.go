@@ -99,25 +99,20 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 
 	switch tx.Path {
 	case "db":
-
-		d := new(map[string]interface{})
-		json.Unmarshal([]byte(tx.Value), &d)
 		data, _ := json.MarshalToString(map[string]interface{}{
 			"block_height": app.blockHeader.Height,
 			"block_hash":   hex.EncodeToString(app.blockhash),
 			"time":         app.blockHeader.Time,
-			"data":         d,
+			"data":         tx.Value,
 		})
 		state.Set([]byte("db:"+tx.Key), []byte(data))
 
 	case "const_db":
-		d := new(map[string]interface{})
-		json.Unmarshal([]byte(tx.Value), &d)
 		data, _ := json.MarshalToString(map[string]interface{}{
 			"block_height": app.blockHeader.Height,
 			"block_hash":   hex.EncodeToString(app.blockhash),
 			"time":         app.blockHeader.Time,
-			"data":         d,
+			"data":         tx.Value,
 		})
 		state.Set([]byte("const_db:"+tx.Key), []byte(data))
 
@@ -154,16 +149,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 			Log:  err.Error(),
 		}
 	}
-
-	// Value必须是json数据
-	if err := json.Unmarshal([]byte(tx.Value), new(map[string]interface{})); err != nil {
-		logger.Error(err.Error(), "CheckTx", "json.Unmarshal")
-		return types.ResponseCheckTx{
-			Code: code.ErrJsonDecode.Code,
-			Log:  err.Error(),
-		}
-	}
-
+	
 	switch tx.Path {
 	case "db":
 	case "const_db":
