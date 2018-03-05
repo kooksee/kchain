@@ -149,7 +149,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 			Log:  err.Error(),
 		}
 	}
-	
+
 	switch tx.Path {
 	case "db":
 	case "const_db":
@@ -208,9 +208,6 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		key  = reqQuery.Data
 	)
 
-	logger.Error(string(key))
-	logger.Error(path)
-
 	switch path {
 	case "db":
 		index, value := state.Get([]byte("db:" + string(key)))
@@ -235,6 +232,27 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		} else {
 			res.Log = "does not exist"
 		}
+
+	case "keys":
+
+		s := strings.Split(string(key), ":")
+
+		s_f := s[0]
+		s_t := s[1]
+		i_f, _ := strconv.Atoi(s_f)
+		i_t, _ := strconv.Atoi(s_t)
+
+		d := []string{}
+
+		for i := i_f; i <= i_t; i++ {
+			if k, _ := state.GetByIndex(i); k != nil && (bytes.HasPrefix(k, []byte("db:")) || bytes.HasPrefix(k, []byte("const_db:"))) {
+				d = append(d, string(k))
+			} else {
+				continue
+			}
+		}
+
+		res.Value, _ = json.Marshal(d)
 
 	default:
 		res.Code = code.ErrUnknownMathod.Code
