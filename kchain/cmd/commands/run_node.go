@@ -12,7 +12,6 @@ import (
 	"kchain/types/cfg"
 
 	"kchain/abci"
-	"kchain/app"
 )
 
 var kcfg = cfg.GetConfig()
@@ -51,8 +50,6 @@ func AddNodeFlags(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
-
-
 // NewRunNodeCmd returns the command that allows the CLI to start a
 // node. It can be used with a custom PrivValidator and in-process ABCI application.
 func NewRunNodeCmd() *cobra.Command {
@@ -81,8 +78,6 @@ func NewRunNodeCmd() *cobra.Command {
 				return fmt.Errorf("Failed to create node: %v", err)
 			}
 
-
-
 			//if otherEd, ok := pvfs.PrivKey.Unwrap().(crypto.PrivKeyEd25519); ok {
 			//	logger.Error(fmt.Sprintf("save key %s ok", hex.EncodeToString(otherEd.Bytes())))
 			//	n.Switch().SetNodePrivKey(otherEd)
@@ -100,13 +95,10 @@ func NewRunNodeCmd() *cobra.Command {
 			// 得到正在运行的tendermint
 			kcfg().Node = n
 
-
 			// 启动应用
-			app.Run()
+			//app.Run()
 
-
-			//n.RunForever()
-
+			n.RunForever()
 
 			return nil
 		},

@@ -30,6 +30,3 @@ type services struct {
 	client *c.HTTP
 }
 
-func init() {
-
-}

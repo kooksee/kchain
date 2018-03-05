@@ -25,7 +25,7 @@ func main() {
 		cmd.VersionCmd,
 
 		cmd.NewRunNodeCmd(),
-		cmd.ServicesCmd(),
+		//cmd.ServicesCmd(),
 	)
 
 	cmd1 := cli.PrepareBaseCmd(rootCmd, "TM", os.ExpandEnv("$HOME/.tendermint"))

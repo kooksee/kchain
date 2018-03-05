@@ -7,23 +7,24 @@ deps:
   desc: 下载依赖包
   dir: src
   cmds:
+    - which gopm || go get -u github.com/gpmgo/gopm
     - ../scripts/deps.sh
 
 init:
-  desc: 安装gopm
+  desc: 初始化项目
   cmds:
     - ln -s `pwd`/kchain `pwd`/src/kchain
-    - go get -u github.com/gpmgo/gopm
+
 
 build:
   desc: 编译应用
   cmds:
-    - GOPATH=`pwd` go build kchain/cmd/main.go
+    - GOPATH=`pwd` GOBIN=`pwd` go install kchain/cmd/main.go
 
 build_linux:
   desc: 交叉编译成linux应用
   cmds:
-    - GOPATH=`pwd` CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build kchain/cmd/main.go
+    - GOPATH=`pwd` GOBIN=`pwd` CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install kchain/cmd/main.go
 
 
 docker_build:

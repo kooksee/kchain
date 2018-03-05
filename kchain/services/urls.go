@@ -5,9 +5,7 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 
-	crypto "github.com/tendermint/go-crypto"
-	"github.com/tendermint/tendermint/types"
-
+	"github.com/tendermint/go-crypto"
 	kuc "kchain/utils/crypto"
 )
 
@@ -22,11 +20,18 @@ func InitUrls(router *gin.Engine) {
 	})
 
 	// 生成节点账号
-	router.GET("/gen_validator", func(c *gin.Context) {
+	router.POST("/keypair", func(c *gin.Context) {
+		k := crypto.GenPrivKeySecp256k1()
+
 		c.JSON(http.StatusOK, gin.H{
 			"code": "ok",
-			"data":types.GenPrivValidatorFS(""),
+			"data": gin.H{
+				"type":   "secp256k1",
+				"pubkey": hex.EncodeToString(k.PubKey().Bytes()),
+				"prikey": hex.EncodeToString(k.Bytes()),
+			},
 		})
+
 		return
 	})
 
@@ -36,7 +41,7 @@ func InitUrls(router *gin.Engine) {
 		if d, err := c.GetRawData(); err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"code": "error",
-				"msg":err.Error(),
+				"msg":  err.Error(),
 			})
 		} else {
 
@@ -47,9 +52,9 @@ func InitUrls(router *gin.Engine) {
 
 			c.JSON(http.StatusOK, gin.H{
 				"code": "ok",
-				"data":gin.H{
+				"data": gin.H{
 					"hash": hex.EncodeToString(pvfs.PrivKey.Sign(d).Bytes()),
-					"keys":ks,
+					"keys": ks,
 				},
 			})
 		}
@@ -57,14 +62,13 @@ func InitUrls(router *gin.Engine) {
 		return
 	})
 
-
 	// 签名服务
 	router.POST("/sign_filter", func(c *gin.Context) {
 
 		if d, err := c.GetRawData(); err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"code": "error",
-				"msg":err.Error(),
+				"msg":  err.Error(),
 			})
 		} else {
 
@@ -75,9 +79,9 @@ func InitUrls(router *gin.Engine) {
 
 			c.JSON(http.StatusOK, gin.H{
 				"code": "ok",
-				"data":gin.H{
+				"data": gin.H{
 					"hash": hex.EncodeToString(pvfs.PrivKey.Sign(d).Bytes()),
-					"keys":ks,
+					"keys": ks,
 				},
 			})
 		}
@@ -90,7 +94,7 @@ func InitUrls(router *gin.Engine) {
 		if d, err := c.GetRawData(); err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"code": "error",
-				"msg":err.Error(),
+				"msg":  err.Error(),
 			})
 		} else {
 
@@ -103,18 +107,18 @@ func InitUrls(router *gin.Engine) {
 			if d, e := hex.DecodeString(sign_msg); e != nil {
 				c.JSON(http.StatusOK, gin.H{
 					"code": "error",
-					"msg":err.Error(),
+					"msg":  err.Error(),
 				})
 			} else {
 				if sig, err := crypto.SignatureFromBytes(d); err != nil {
 					c.JSON(http.StatusOK, gin.H{
 						"code": "error",
-						"msg":err.Error(),
+						"msg":  err.Error(),
 					})
 				} else {
 					c.JSON(http.StatusOK, gin.H{
 						"code": "ok",
-						"data":pvfs.PubKey.VerifyBytes([]byte(msg), sig),
+						"data": pvfs.PubKey.VerifyBytes([]byte(msg), sig),
 					})
 				}
 			}
@@ -128,7 +132,7 @@ func InitUrls(router *gin.Engine) {
 		if d, err := c.GetRawData(); err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"code": "error",
-				"msg":err.Error(),
+				"msg":  err.Error(),
 			})
 		} else {
 
@@ -139,9 +143,9 @@ func InitUrls(router *gin.Engine) {
 
 			c.JSON(http.StatusOK, gin.H{
 				"code": "ok",
-				"data":gin.H{
+				"data": gin.H{
 					"hash": d,
-					"keys":ks,
+					"keys": ks,
 				},
 			})
 		}

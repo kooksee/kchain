@@ -87,6 +87,8 @@ func (app *PersistentApplication) SetOption(req types.RequestSetOption) types.Re
 func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDeliverTx {
 	tx := NewTransaction()
 
+	logger.Error(string(txBytes))
+
 	// decode tx
 	if err := tx.FromBytes(txBytes); err != nil {
 		return types.ResponseDeliverTx{
@@ -107,6 +109,7 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 			"data":         d,
 		})
 		state.Set([]byte("db:"+tx.Key), []byte(data))
+
 	case "const_db":
 		d := new(map[string]interface{})
 		json.Unmarshal([]byte(tx.Value), &d)
@@ -117,6 +120,7 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 			"data":         d,
 		})
 		state.Set([]byte("const_db:"+tx.Key), []byte(data))
+
 	case "validator":
 		d, _ := hex.DecodeString(tx.Key)
 		d1, _ := strconv.Atoi(tx.Value)
@@ -153,6 +157,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 
 	// Value必须是json数据
 	if err := json.Unmarshal([]byte(tx.Value), new(map[string]interface{})); err != nil {
+		logger.Error(err.Error(), "CheckTx", "json.Unmarshal")
 		return types.ResponseCheckTx{
 			Code: code.ErrJsonDecode.Code,
 			Log:  err.Error(),
@@ -216,6 +221,9 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		path = reqQuery.Path
 		key  = reqQuery.Data
 	)
+
+	logger.Error(string(key))
+	logger.Error(path)
 
 	switch path {
 	case "db":
