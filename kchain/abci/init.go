@@ -7,6 +7,7 @@ import (
 
 	kts "kchain/types"
 	kcfg "kchain/types/cfg"
+	"fmt"
 )
 
 var (
@@ -15,6 +16,10 @@ var (
 	state  *iavl.VersionedTree
 	logger log.Logger
 )
+
+func f(format string, a ...interface{}) string {
+	return fmt.Sprintf(format, a...)
+}
 
 type Transaction kts.Transaction
 

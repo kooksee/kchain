@@ -87,8 +87,6 @@ func (app *PersistentApplication) SetOption(req types.RequestSetOption) types.Re
 func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDeliverTx {
 	tx := NewTransaction()
 
-	logger.Error(string(txBytes))
-
 	// decode tx
 	if err := tx.FromBytes(txBytes); err != nil {
 		return types.ResponseDeliverTx{
@@ -97,24 +95,19 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 		}
 	}
 
-	switch tx.Path {
-	case "db":
-		data, _ := json.MarshalToString(map[string]interface{}{
-			"block_height": app.blockHeader.Height,
-			"block_hash":   hex.EncodeToString(app.blockhash),
-			"time":         app.blockHeader.Time,
-			"data":         tx.Value,
-		})
-		state.Set([]byte("db:"+tx.Key), []byte(data))
+	d := strings.Split(tx.Path, ".")
+	path := d[0]
+	db := d[1]
 
-	case "const_db":
+	switch path {
+	case "db", "const_db":
 		data, _ := json.MarshalToString(map[string]interface{}{
 			"block_height": app.blockHeader.Height,
 			"block_hash":   hex.EncodeToString(app.blockhash),
 			"time":         app.blockHeader.Time,
 			"data":         tx.Value,
 		})
-		state.Set([]byte("const_db:"+tx.Key), []byte(data))
+		state.Set([]byte(f("%s:%s", db, tx.Key)), []byte(data))
 
 	case "validator":
 		d, _ := hex.DecodeString(tx.Key)
@@ -150,10 +143,14 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 		}
 	}
 
-	switch tx.Path {
+	d := strings.Split(tx.Path, ".")
+	path := d[0]
+	db := d[1]
+
+	switch path {
 	case "db":
 	case "const_db":
-		if state.Has([]byte("const_db:" + tx.Key)) {
+		if state.Has([]byte(f("%s:%s", db, tx.Key) )) {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
 				Log:  fmt.Sprintf("the key %s already exists", tx.Key),
@@ -204,25 +201,19 @@ func (app *PersistentApplication) Commit() (res types.ResponseCommit) {
 
 func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.ResponseQuery) {
 	var (
-		path = reqQuery.Path
-		key  = reqQuery.Data
+		key = reqQuery.Data
 	)
 
-	switch path {
-	case "db":
-		index, value := state.Get([]byte("db:" + string(key)))
-		res.Code = types.CodeTypeOK
-		res.Index = int64(index)
-		res.Key = key
-		res.Value = value
-		if value != nil {
-			res.Log = "exists"
-		} else {
-			res.Log = "does not exist"
-		}
+	d := strings.Split(reqQuery.Path, ".")
+	path := d[0]
+	db := ""
+	if len(d) == 2 {
+		db = d[1]
+	}
 
-	case "const_db":
-		index, value := state.Get([]byte("const_db:" + string(key)))
+	switch path {
+	case "db", "const_db":
+		index, value := state.Get([]byte(f("%s:%s", db, string(key))))
 		res.Code = types.CodeTypeOK
 		res.Index = int64(index)
 		res.Key = key
@@ -245,7 +236,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		d := []string{}
 
 		for i := i_f; i <= i_t; i++ {
-			if k, _ := state.GetByIndex(i); k != nil && (bytes.HasPrefix(k, []byte("db:")) || bytes.HasPrefix(k, []byte("const_db:"))) {
+			if k, _ := state.GetByIndex(i); k != nil && !bytes.HasPrefix(k, []byte("val:")) {
 				d = append(d, string(k))
 			} else {
 				continue
