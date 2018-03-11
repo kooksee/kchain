@@ -48,12 +48,6 @@ docker_test:
   desc: kchain docker test
   cmds:
     - ls * | grep example_data || mkdir example_data
-    - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 9000:9000 kchain init
-    - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 9000:9000 kchain
+    - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 46657:46657 kchain init
+    - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 46657:46657 kchain
     - rm -rf example_data
-
-
-docker_services_test:
-  desc: kchain services docker test
-  cmds:
-      - docker run --rm -it -v `pwd`/test/d:/kdata -p 46656:46656 -p 9000:9000 kchain
