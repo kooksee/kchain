@@ -62,8 +62,8 @@ func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKeyEd25519) error {
 
 	if !state.Has(key) {
 		m := "Please contact the administrator to join the node"
-		logger.Error(m)
-		panic(m)
+		logger.Error(m, "key", key)
+		return errors.New(m)
 	}
 	return nil
 }
@@ -144,6 +144,14 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 	}
 
 	d := strings.Split(tx.Path, ".")
+
+	if len(d) != 2 {
+		return types.ResponseCheckTx{
+			Code: code.ErrTransactionVerify.Code,
+			Log:  fmt.Sprintf("the path %s is error", tx.Path),
+		}
+	}
+
 	path := d[0]
 	db := d[1]
 
@@ -169,10 +177,17 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 				Log:  err.Error(),
 			}
 		}
-		if _, err := strconv.Atoi(tx.Value); err != nil {
+		if d, err := strconv.Atoi(tx.Value); err != nil {
 			return types.ResponseCheckTx{
 				Code: code.ErrJsonDecode.Code,
 				Log:  err.Error(),
+			}
+		} else {
+			if d > 9 {
+				return types.ResponseCheckTx{
+					Code: code.ErrVerify.Code,
+					Log:  "the node power must be less than 10",
+				}
 			}
 		}
 
@@ -258,6 +273,9 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 	for _, v := range req.Validators {
 		// 最高权限拥有者
 		if v.Power == 10 {
+
+			state.Set([]byte("genesis_validator"), v.PubKey)
+
 			app.GenesisValidator = hex.EncodeToString(v.PubKey)
 		}
 
@@ -273,12 +291,8 @@ func (app *PersistentApplication) BeginBlock(req types.RequestBeginBlock) types.
 	app.blockHeader = req.Header
 	app.blockhash = req.Hash
 
-	//logger.Error(hex.EncodeToString(req.Hash))
-	//logger.Error(hex.EncodeToString(req.Header.LastCommitHash))
-	//logger.Error(hex.EncodeToString(req.Header.DataHash))
-	//logger.Error(hex.EncodeToString(req.Header.ValidatorsHash))
-	//logger.Error(hex.EncodeToString(req.Header.AppHash))
-	//logger.Error(hex.EncodeToString(req.Header.LastBlockID.Hash))
+	_, d := state.Get([]byte("genesis_validator"))
+	app.GenesisValidator = hex.EncodeToString(d)
 
 	return types.ResponseBeginBlock{}
 }
@@ -312,11 +326,16 @@ func (app *PersistentApplication) Validators() (validators []*types.Validator) {
 // add, update, or remove a validator
 func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(v.PubKey))
+
+	if v.Power < 0 {
+		state.Remove(key)
+		v.Power = 0
+		logger.Info("delete node ok", "key", key)
+	}
 	if v.Power == 0 {
 		if !state.Has(key) {
 			return errors.New(fmt.Sprintf("Cannot remove non-existent validator %X", key))
 		}
-		state.Remove(key)
 	} else {
 		// add or update validator
 		value := bytes.NewBuffer(make([]byte, 0))
@@ -325,7 +344,7 @@ func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 		}
 		state.Set(key, value.Bytes())
 
-		logger.Error(fmt.Sprintf("save key %s ok", key))
+		logger.Info("save node ok", "key", key)
 	}
 
 	app.ValUpdates = append(app.ValUpdates, v)

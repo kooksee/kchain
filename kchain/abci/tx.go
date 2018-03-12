@@ -40,10 +40,9 @@ func (t *Transaction) Verify() error {
 		d, _ := hex.DecodeString(t.Signature)
 		if sig, err := crypto.SignatureFromBytes(d); err != nil {
 			return err
-
 		} else {
-			_sign_msg := []byte(fmt.Sprintf("%s%d%s", t.Key, t.Timestamp, t.Value))
-			if !pk.VerifyBytes(_sign_msg, sig) {
+			signMsg := crypto.Ripemd160([]byte(fmt.Sprintf("%s%d%s", t.Key, t.Timestamp, t.Value)))
+			if !pk.VerifyBytes(signMsg, sig) {
 				return errors.New("transaction verify false")
 			}
 		}

@@ -5,13 +5,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	nm "github.com/tendermint/tendermint/node"
-
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/proxy"
 	"kchain/types/cfg"
 
 	"kchain/abci"
+
+	kn "kchain/node"
 )
 
 var kcfg = cfg.GetConfig()
@@ -61,30 +61,26 @@ func NewRunNodeCmd() *cobra.Command {
 			// 初始化配置
 			kcfg().Config = config
 
-			abci_app := abci.Run()
+			abciApp := abci.Run()
 
 			pvfs := types.LoadOrGenPrivValidatorFS(config.PrivValidatorFile())
 
 			// 启动abci服务和tendermint节点
-			n, err := nm.NewNode(
+			n, err := kn.NewNode(
 				config,
 				pvfs,
-				proxy.NewLocalClientCreator(abci_app),
-				nm.DefaultGenesisDocProviderFunc(config),
-				nm.DefaultDBProvider,
+				pvfs,
+				proxy.NewLocalClientCreator(abciApp),
+				kn.DefaultGenesisDocProviderFunc(config),
+				kn.DefaultDBProvider,
 				logger,
 			)
 			if err != nil {
 				return fmt.Errorf("Failed to create node: %v", err)
 			}
 
-			//if otherEd, ok := pvfs.PrivKey.Unwrap().(crypto.PrivKeyEd25519); ok {
-			//	logger.Error(fmt.Sprintf("save key %s ok", hex.EncodeToString(otherEd.Bytes())))
-			//	n.Switch().SetNodePrivKey(otherEd)
-			//}
-
 			// 新加入节点的过滤逻辑
-			n.Switch().SetPubKeyFilter(abci_app.PubKeyFilter)
+			n.Switch().SetPubKeyFilter(abciApp.PubKeyFilter)
 
 			if err := n.Start(); err != nil {
 				return fmt.Errorf("Failed to start node: %v", err)
@@ -93,7 +89,7 @@ func NewRunNodeCmd() *cobra.Command {
 			}
 
 			// 得到正在运行的tendermint
-			kcfg().Node = n
+			//kcfg().Node = n
 
 			// 启动应用
 			//app.Run()
