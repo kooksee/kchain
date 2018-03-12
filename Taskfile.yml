@@ -50,4 +50,3 @@ docker_test:
     - ls * | grep example_data || mkdir example_data
     - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 46657:46657 kchain init
     - docker run --rm -it -v `pwd`/example_data:/kdata -p 46656:46656 -p 46657:46657 kchain
-    - rm -rf example_data

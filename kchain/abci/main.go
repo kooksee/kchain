@@ -102,6 +102,7 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 	switch path {
 	case "db", "const_db":
 		data, _ := json.MarshalToString(map[string]interface{}{
+			"sender":       tx.PubKey,
 			"block_height": app.blockHeader.Height,
 			"block_hash":   hex.EncodeToString(app.blockhash),
 			"time":         app.blockHeader.Time,
@@ -165,7 +166,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 			}
 		}
 	case "validator":
-		if strings.Compare(tx.PubKey, app.GenesisValidator) != 0 {
+		if tx.PubKey == app.GenesisValidator {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
 				Log:  "Please contact the administrator to add validator",
@@ -243,6 +244,12 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 
 		s := strings.Split(string(key), ":")
 
+		if len(s) != 2 {
+			res.Code = code.ErrTransactionDecode.Code
+			res.Log = f("error range %s", key)
+			return
+		}
+
 		s_f := s[0]
 		s_t := s[1]
 		i_f, _ := strconv.Atoi(s_f)
@@ -251,8 +258,11 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		d := []string{}
 
 		for i := i_f; i <= i_t; i++ {
-			if k, _ := state.GetByIndex(i); k != nil && !bytes.HasPrefix(k, []byte("val:")) {
-				d = append(d, string(k))
+
+			if k, _ := state.GetByIndex(i); k != nil {
+				if !bytes.HasPrefix(k, []byte("val:")) && !bytes.HasPrefix(k, []byte("__app:")) {
+					d = append(d, string(k))
+				}
 			} else {
 				continue
 			}
@@ -274,7 +284,7 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 		// 最高权限拥有者
 		if v.Power == 10 {
 
-			state.Set([]byte("genesis_validator"), v.PubKey)
+			state.Set([]byte("__app:genesis_validator"), v.PubKey)
 
 			app.GenesisValidator = hex.EncodeToString(v.PubKey)
 		}
@@ -291,7 +301,7 @@ func (app *PersistentApplication) BeginBlock(req types.RequestBeginBlock) types.
 	app.blockHeader = req.Header
 	app.blockhash = req.Hash
 
-	_, d := state.Get([]byte("genesis_validator"))
+	_, d := state.Get([]byte("__app:genesis_validator"))
 	app.GenesisValidator = hex.EncodeToString(d)
 
 	return types.ResponseBeginBlock{}
@@ -303,14 +313,10 @@ func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.Resp
 
 //---------------------------------------------
 
-func isValidatorTx(tx []byte) bool {
-	return strings.HasPrefix(string(tx), cnst.ValidatorPrefix)
-}
-
 // update validators
 func (app *PersistentApplication) Validators() (validators []*types.Validator) {
 	state.Iterate(func(key, value []byte) bool {
-		if isValidatorTx(key) {
+		if strings.HasPrefix(string(key), cnst.ValidatorPrefix) {
 			validator := new(types.Validator)
 			err := types.ReadMessage(bytes.NewBuffer(value), validator)
 			if err != nil {

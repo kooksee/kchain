@@ -5,8 +5,6 @@ import (
 
 	//c1 "github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	"strings"
-
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -24,11 +22,11 @@ func (t *Transaction) ToBytes() ([]byte, error) {
 
 func (t *Transaction) Verify() error {
 
-	if strings.Compare(t.Signature, "") == 0 || strings.Compare(t.PubKey, "") == 0 {
+	if t.Signature == "" || t.PubKey == "" {
 		return errors.New("sign or pubkey is null")
 	}
 
-	// 事务超过两分钟没有被确认，则认定为超时
+	// 事务超过一分钟没有被确认，则认定为超时
 	if time.Now().Unix()-t.Timestamp > int64(time.Minute*1) {
 		return errors.New("transaction timeout")
 	}
