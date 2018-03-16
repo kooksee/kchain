@@ -53,15 +53,15 @@ func TestDifferentClients(t *testing.T) {
 	assertReceive(t, "Iceman", ch1)
 
 	ch2 := make(chan interface{}, 1)
-	err = s.Subscribe(ctx, "client-2", query.MustParse("tm.events.type='NewBlock' AND abci.account.name='Igor'"), ch2)
+	err = s.Subscribe(ctx, "client-2", query.MustParse("tm.events.type='NewBlock' AND app.account.name='Igor'"), ch2)
 	require.NoError(t, err)
-	err = s.PublishWithTags(ctx, "Ultimo", map[string]interface{}{"tm.events.type": "NewBlock", "abci.account.name": "Igor"})
+	err = s.PublishWithTags(ctx, "Ultimo", map[string]interface{}{"tm.events.type": "NewBlock", "app.account.name": "Igor"})
 	require.NoError(t, err)
 	assertReceive(t, "Ultimo", ch1)
 	assertReceive(t, "Ultimo", ch2)
 
 	ch3 := make(chan interface{}, 1)
-	err = s.Subscribe(ctx, "client-3", query.MustParse("tm.events.type='NewRoundStep' AND abci.account.name='Igor' AND abci.invoice.number = 10"), ch3)
+	err = s.Subscribe(ctx, "client-3", query.MustParse("tm.events.type='NewRoundStep' AND app.account.name='Igor' AND app.invoice.number = 10"), ch3)
 	require.NoError(t, err)
 	err = s.PublishWithTags(ctx, "Valeria Richards", map[string]interface{}{"tm.events.type": "NewRoundStep"})
 	require.NoError(t, err)
@@ -202,13 +202,13 @@ func benchmarkNClients(n int, b *testing.B) {
 			for range ch {
 			}
 		}()
-		s.Subscribe(ctx, clientID, query.MustParse(fmt.Sprintf("abci.Account.Owner = 'Ivan' AND abci.Invoices.Number = %d", i)), ch)
+		s.Subscribe(ctx, clientID, query.MustParse(fmt.Sprintf("app.Account.Owner = 'Ivan' AND app.Invoices.Number = %d", i)), ch)
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.PublishWithTags(ctx, "Gamora", map[string]interface{}{"abci.Account.Owner": "Ivan", "abci.Invoices.Number": i})
+		s.PublishWithTags(ctx, "Gamora", map[string]interface{}{"app.Account.Owner": "Ivan", "app.Invoices.Number": i})
 	}
 }
 
@@ -218,7 +218,7 @@ func benchmarkNClientsOneQuery(n int, b *testing.B) {
 	defer s.Stop()
 
 	ctx := context.Background()
-	q := query.MustParse("abci.Account.Owner = 'Ivan' AND abci.Invoices.Number = 1")
+	q := query.MustParse("app.Account.Owner = 'Ivan' AND app.Invoices.Number = 1")
 	for i := 0; i < n; i++ {
 		ch := make(chan interface{})
 		go func() {
@@ -231,7 +231,7 @@ func benchmarkNClientsOneQuery(n int, b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.PublishWithTags(ctx, "Gamora", map[string]interface{}{"abci.Account.Owner": "Ivan", "abci.Invoices.Number": 1})
+		s.PublishWithTags(ctx, "Gamora", map[string]interface{}{"app.Account.Owner": "Ivan", "app.Invoices.Number": 1})
 	}
 }
 

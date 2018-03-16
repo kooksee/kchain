@@ -1,16 +1,28 @@
 package app
 
 import (
-	tlog "github.com/tendermint/tmlibs/log"
-	kcfg "kchain/types/cfg"
-
 	"github.com/json-iterator/go"
-	"github.com/tendermint/tendermint/types"
+	"github.com/tendermint/iavl"
+	"github.com/tendermint/tmlibs/log"
+
+	kts "kchain/types"
+	kcfg "kchain/types/cfg"
+	"fmt"
 )
 
 var (
-	json   = jsoniter.ConfigCompatibleWithStandardLibrary
 	cfg    = kcfg.GetConfig()
-	logger tlog.Logger
-	pvfs   *types.PrivValidatorFS
+	json   = jsoniter.ConfigCompatibleWithStandardLibrary
+	state  *iavl.VersionedTree
+	logger log.Logger
 )
+
+func f(format string, a ...interface{}) string {
+	return fmt.Sprintf(format, a...)
+}
+
+type Transaction kts.Transaction
+
+func NewTransaction() *Transaction {
+	return &Transaction{}
+}

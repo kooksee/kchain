@@ -50,7 +50,7 @@ func TestEcho(t *testing.T) {
 
 	// Start server
 	s := server.NewSocketServer(sockPath, dummy.NewDummyApplication())
-	s.SetLogger(log.TestingLogger().With("module", "abci-server"))
+	s.SetLogger(log.TestingLogger().With("module", "app-server"))
 	if err := s.Start(); err != nil {
 		t.Fatalf("Error starting socket server: %v", err.Error())
 	}
@@ -61,7 +61,7 @@ func TestEcho(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating ABCI client: %v", err.Error())
 	}
-	cli.SetLogger(log.TestingLogger().With("module", "abci-client"))
+	cli.SetLogger(log.TestingLogger().With("module", "app-client"))
 	if err := cli.Start(); err != nil {
 		t.Fatalf("Error starting ABCI client: %v", err.Error())
 	}
@@ -84,7 +84,7 @@ func BenchmarkEcho(b *testing.B) {
 
 	// Start server
 	s := server.NewSocketServer(sockPath, dummy.NewDummyApplication())
-	s.SetLogger(log.TestingLogger().With("module", "abci-server"))
+	s.SetLogger(log.TestingLogger().With("module", "app-server"))
 	if err := s.Start(); err != nil {
 		b.Fatalf("Error starting socket server: %v", err.Error())
 	}
@@ -95,7 +95,7 @@ func BenchmarkEcho(b *testing.B) {
 	if err != nil {
 		b.Fatalf("Error creating ABCI client: %v", err.Error())
 	}
-	cli.SetLogger(log.TestingLogger().With("module", "abci-client"))
+	cli.SetLogger(log.TestingLogger().With("module", "app-client"))
 	if err := cli.Start(); err != nil {
 		b.Fatalf("Error starting ABCI client: %v", err.Error())
 	}
@@ -123,7 +123,7 @@ func TestInfo(t *testing.T) {
 
 	// Start server
 	s := server.NewSocketServer(sockPath, dummy.NewDummyApplication())
-	s.SetLogger(log.TestingLogger().With("module", "abci-server"))
+	s.SetLogger(log.TestingLogger().With("module", "app-server"))
 	if err := s.Start(); err != nil {
 		t.Fatalf("Error starting socket server: %v", err.Error())
 	}
@@ -134,7 +134,7 @@ func TestInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating ABCI client: %v", err.Error())
 	}
-	cli.SetLogger(log.TestingLogger().With("module", "abci-client"))
+	cli.SetLogger(log.TestingLogger().With("module", "app-client"))
 	if err := cli.Start(); err != nil {
 		t.Fatalf("Error starting ABCI client: %v", err.Error())
 	}

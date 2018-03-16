@@ -64,7 +64,7 @@ import (
 //
 // - `proof`: the `types.TxProof` object
 // - `tx`: `[]byte` - the transaction
-// - `tx_result`: the `abci.Result` object
+// - `tx_result`: the `app.Result` object
 // - `index`: `int` - index of the transaction
 // - `height`: `int` - height of the block where this transaction was in
 func Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
@@ -158,7 +158,7 @@ func Tx(hash []byte, prove bool) (*ctypes.ResultTx, error) {
 //
 // - `proof`: the `types.TxProof` object
 // - `tx`: `[]byte` - the transaction
-// - `tx_result`: the `abci.Result` object
+// - `tx_result`: the `app.Result` object
 // - `index`: `int` - index of the transaction
 // - `height`: `int` - height of the block where this transaction was in
 func TxSearch(query string, prove bool) ([]*ctypes.ResultTx, error) {

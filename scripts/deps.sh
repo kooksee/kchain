@@ -6,7 +6,7 @@ github.com/json-iterator/go
 github.com/shopspring/decimal
 github.com/spf13/cobra
 github.com/spf13/viper
-github.com/tendermint/abci
+github.com/tendermint/app
 github.com/tendermint/tendermint
 github.com/tendermint/tmlibs
 golang.org/x/crypto

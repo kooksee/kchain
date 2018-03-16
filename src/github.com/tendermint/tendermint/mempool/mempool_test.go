@@ -28,7 +28,7 @@ func newMempoolWithApp(cc proxy.ClientCreator) *Mempool {
 	config := cfg.ResetTestRoot("mempool_test")
 
 	appConnMem, _ := cc.NewABCIClient()
-	appConnMem.SetLogger(log.TestingLogger().With("module", "abci-client", "connection", "mempool"))
+	appConnMem.SetLogger(log.TestingLogger().With("module", "app-client", "connection", "mempool"))
 	err := appConnMem.Start()
 	if err != nil {
 		panic(err)
@@ -122,7 +122,7 @@ func TestSerialReap(t *testing.T) {
 
 	mempool := newMempoolWithApp(cc)
 	appConnCon, _ := cc.NewABCIClient()
-	appConnCon.SetLogger(log.TestingLogger().With("module", "abci-client", "connection", "consensus"))
+	appConnCon.SetLogger(log.TestingLogger().With("module", "app-client", "connection", "consensus"))
 	err := appConnCon.Start()
 	require.Nil(t, err)
 

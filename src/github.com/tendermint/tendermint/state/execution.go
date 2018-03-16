@@ -20,7 +20,7 @@ import (
 
 // BlockExecutor provides the context and accessories for properly executing a block.
 type BlockExecutor struct {
-	// save state, validators, consensus params, abci responses here
+	// save state, validators, consensus params, app responses here
 	db dbm.DB
 
 	// execute the app against this
@@ -120,7 +120,7 @@ func (blockExec *BlockExecutor) ApplyBlock(s State, blockID types.BlockID, block
 }
 
 // Commit locks the mempool, runs the ABCI Commit message, and updates the mempool.
-// It returns the result of calling abci.Commit (the AppHash), and an error.
+// It returns the result of calling app.Commit (the AppHash), and an error.
 // The Mempool must be locked during commit and update because state is typically reset on Commit and old txs must be replayed
 // against committed state before new txs are run in the mempool, lest they be invalid.
 func (blockExec *BlockExecutor) Commit(block *types.Block) ([]byte, error) {
@@ -404,7 +404,7 @@ func fireEvents(logger log.Logger, eventBus types.BlockEventPublisher, block *ty
 // Execute block without state. TODO: eliminate
 
 // ExecCommitBlock executes and commits a block on the proxyApp without validating or mutating the state.
-// It returns the application root hash (result of abci.Commit).
+// It returns the application root hash (result of app.Commit).
 func ExecCommitBlock(appConnConsensus proxy.AppConnConsensus, block *types.Block, logger log.Logger) ([]byte, error) {
 	_, err := execBlockOnProxyApp(logger, appConnConsensus, block)
 	if err != nil {

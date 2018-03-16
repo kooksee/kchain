@@ -27,7 +27,7 @@ func main() {
 	// NOTE:
 	// Users wishing to:
 	//	* Use an external signer for their validators
-	//	* Supply an in-proc abci app
+	//	* Supply an in-proc app app
 	//	* Supply a genesis doc file from another source
 	//	* Provide their own DB implementation
 	// can copy this file and use something other than the

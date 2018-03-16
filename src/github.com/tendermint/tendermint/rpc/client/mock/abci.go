@@ -9,7 +9,7 @@ import (
 	"github.com/tendermint/tendermint/version"
 )
 
-// ABCIApp will send all abci related request to the named app,
+// ABCIApp will send all app related request to the named app,
 // so you can test app behavior from a client without needing
 // an entire tendermint node
 type ABCIApp struct {
@@ -63,7 +63,7 @@ func (a ABCIApp) BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error)
 	return &ctypes.ResultBroadcastTx{c.Code, c.Data, c.Log, tx.Hash()}, nil
 }
 
-// ABCIMock will send all abci related request to the named app,
+// ABCIMock will send all app related request to the named app,
 // so you can test app behavior from a client without needing
 // an entire tendermint node
 type ABCIMock struct {

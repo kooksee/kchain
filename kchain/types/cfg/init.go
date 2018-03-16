@@ -2,12 +2,13 @@ package cfg
 
 import (
 	"sync"
-	cfg "github.com/tendermint/tendermint/config"
 	nm "github.com/tendermint/tendermint/node"
 	dbm "github.com/tendermint/tmlibs/db"
 	tlog "github.com/tendermint/tmlibs/log"
 	ttypes "github.com/tendermint/tendermint/types"
 	c "github.com/tendermint/tendermint/rpc/client"
+
+	cfg "github.com/tendermint/tendermint/config"
 )
 
 var (
@@ -29,4 +30,3 @@ type services struct {
 	pk     *ttypes.PrivValidatorFS
 	client *c.HTTP
 }
-

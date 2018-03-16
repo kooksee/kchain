@@ -4,7 +4,7 @@ easily allow serialization and deserialization of your data structures
 in both binary and json representations.
 
 This is commonly needed for interpreting transactions or stored data in the
-abci app, as well as accepting json input in the light-client proxy. If we
+app app, as well as accepting json input in the light-client proxy. If we
 can standardize how we pass data around the app, we can also allow more
 extensions, like data storage that can interpret the meaning of the []byte
 passed in, and use that to index multiple fields for example.

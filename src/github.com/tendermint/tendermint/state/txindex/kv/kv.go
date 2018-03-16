@@ -382,7 +382,7 @@ func keyForTag(tag *abci.KVPair, result *types.TxResult) []byte {
 		return []byte(fmt.Sprintf("%s/%v/%d/%d", tag.Key, tag.ValueString, result.Height, result.Index))
 	case abci.KVPair_INT:
 		return []byte(fmt.Sprintf("%s/%v/%d/%d", tag.Key, tag.ValueInt, result.Height, result.Index))
-	// case abci.KVPair_TIME:
+	// case app.KVPair_TIME:
 	// 	return []byte(fmt.Sprintf("%s/%d/%d/%d", tag.Key, tag.ValueTime.Unix(), result.Height, result.Index))
 	default:
 		panic(fmt.Sprintf("Undefined value type: %v", tag.ValueType))

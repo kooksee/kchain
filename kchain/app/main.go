@@ -1,4 +1,4 @@
-package abci
+package app
 
 import (
 	"bytes"
@@ -39,7 +39,7 @@ func Run() *PersistentApplication {
 }
 
 func NewPersistentApplication(name, dbDir string) *PersistentApplication {
-	logger = kcfg.GetLogWithKeyVals("module", "abci")
+	logger = kcfg.GetLogWithKeyVals("module", "app")
 
 	db, err := dbm.NewGoLevelDB(name, dbDir)
 	if err != nil {

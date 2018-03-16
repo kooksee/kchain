@@ -74,14 +74,14 @@ BUG FIXES:
 ## 0.13.0 (December 6, 2017)
 
 BREAKING CHANGES:
-- abci: update to v0.8 using gogo/protobuf; includes tx tags, vote info in RequestBeginBlock, data.Bytes everywhere, use int64, etc.
+- app: update to v0.8 using gogo/protobuf; includes tx tags, vote info in RequestBeginBlock, data.Bytes everywhere, use int64, etc.
 - types: block heights are now `int64` everywhere
 - types & node: EventSwitch and EventCache have been replaced by EventBus and EventBuffer; event types have been overhauled
 - node: EventSwitch methods now refer to EventBus
 - rpc/lib/types: RPCResponse is no longer a pointer; WSRPCConnection interface has been modified
 - rpc/client: WaitForOneEvent takes an EventsClient instead of types.EventSwitch
 - rpc/client: Add/RemoveListenerForEvent are now Subscribe/Unsubscribe
-- rpc/core/types: ResultABCIQuery wraps an abci.ResponseQuery
+- rpc/core/types: ResultABCIQuery wraps an app.ResponseQuery
 - rpc: `/subscribe` and `/unsubscribe` take `query` arg instead of `event`
 - rpc: `/status` returns the LatestBlockTime in human readable form instead of in nanoseconds
 - mempool: cached transactions return an error instead of an ABCI response with BadNonce
@@ -151,7 +151,7 @@ BUG FIXES:
 
 BREAKING:
  - genesis file: validator `amount` is now `power`
- - abci: Info, BeginBlock, InitChain all take structs
+ - app: Info, BeginBlock, InitChain all take structs
  - rpc: various changes to match JSONRPC spec (http://www.jsonrpc.org/specification), including breaking ones:
     - requests that previously returned HTTP code 4XX now return 200 with an error code in the JSONRPC.
     - `rpctypes.RPCResponse` uses new `RPCError` type instead of `string`.

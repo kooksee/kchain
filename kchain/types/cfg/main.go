@@ -1,7 +1,6 @@
 package cfg
 
 import (
-	cfg "github.com/tendermint/tendermint/config"
 	//dbm "github.com/tendermint/tmlibs/db"
 	tlog "github.com/tendermint/tmlibs/log"
 	tmflags "github.com/tendermint/tmlibs/cli/flags"
@@ -9,6 +8,8 @@ import (
 	"github.com/tendermint/go-crypto"
 	c "github.com/tendermint/tendermint/rpc/client"
 	"os"
+
+	cfg "github.com/tendermint/tendermint/config"
 )
 
 func DbSet(k, v string) {

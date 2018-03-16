@@ -135,7 +135,7 @@ func TestRmBadTx(t *testing.T) {
 	checkTxRespCh := make(chan struct{})
 	go func() {
 		// Try to send the tx through the mempool.
-		// CheckTx should not err, but the app should return a bad abci code
+		// CheckTx should not err, but the app should return a bad app code
 		// and the tx should get removed from the pool
 		err := cs.mempool.CheckTx(txBytes, func(r *abci.Response) {
 			if r.GetCheckTx().Code != code.CodeTypeBadNonce {

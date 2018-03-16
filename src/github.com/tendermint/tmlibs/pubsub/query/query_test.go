@@ -40,8 +40,8 @@ func TestMatches(t *testing.T) {
 		{"tx.time >= TIME 2013-05-03T14:45:00Z", map[string]interface{}{"tx.time": time.Now()}, false, true},
 		{"tx.time = TIME 2013-05-03T14:45:00Z", map[string]interface{}{"tx.time": txTime}, false, false},
 
-		{"abci.owner.name CONTAINS 'Igor'", map[string]interface{}{"abci.owner.name": "Igor,Ivan"}, false, true},
-		{"abci.owner.name CONTAINS 'Igor'", map[string]interface{}{"abci.owner.name": "Pavel,Ivan"}, false, false},
+		{"app.owner.name CONTAINS 'Igor'", map[string]interface{}{"app.owner.name": "Igor,Ivan"}, false, true},
+		{"app.owner.name CONTAINS 'Igor'", map[string]interface{}{"app.owner.name": "Pavel,Ivan"}, false, false},
 	}
 
 	for _, tc := range testCases {

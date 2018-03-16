@@ -80,7 +80,7 @@ type BaseConfig struct {
 	ProxyApp string `mapstructure:"proxy_app"`
 
 	// Mechanism to connect to the ABCI application: socket | grpc
-	ABCI string `mapstructure:"abci"`
+	ABCI string `mapstructure:"app"`
 
 	// Output level for logging
 	LogLevel string `mapstructure:"log_level"`

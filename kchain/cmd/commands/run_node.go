@@ -9,7 +9,7 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 	"kchain/types/cfg"
 
-	"kchain/abci"
+	"kchain/app"
 
 	kn "kchain/node"
 	"encoding/hex"
@@ -31,9 +31,9 @@ func AddNodeFlags(cmd *cobra.Command) *cobra.Command {
 	// node flags
 	//cmd.Flags().BoolVar(&config.FastSync, "fast_sync", config.FastSync, "Fast blockchain syncing")
 
-	// abci flags
+	// app flags
 	//cmd.Flags().StringVar(&config.ProxyApp, "proxy_app", config.ProxyApp, "Proxy app address, or 'nilapp' or 'dummy' for local testing.")
-	//cmd.Flags().StringVar(&config.ABCI, "abci", config.ABCI, "Specify abci transport (socket | grpc)")
+	//cmd.Flags().StringVar(&config.ABCI, "app", config.ABCI, "Specify app transport (socket | grpc)")
 
 	// rpc flags
 	//cmd.Flags().StringVar(&config.RPC.GRPCListenAddress, "rpc.grpc_laddr", config.RPC.GRPCListenAddress, "GRPC listen address (BroadcastTx only). Port required")
@@ -62,7 +62,7 @@ func NewRunNodeCmd() *cobra.Command {
 			// 初始化配置
 			kcfg().Config = config
 
-			abciApp := abci.Run()
+			abciApp := app.Run()
 
 			pvfs := types.LoadOrGenPrivValidatorFS(config.PrivValidatorFile())
 
@@ -90,12 +90,6 @@ func NewRunNodeCmd() *cobra.Command {
 			} else {
 				logger.Info("Started node", "nodeInfo", n.Switch().NodeInfo())
 			}
-
-			// 得到正在运行的tendermint
-			//kcfg().Node = n
-
-			// 启动应用
-			//app.Run()
 
 			n.RunForever()
 

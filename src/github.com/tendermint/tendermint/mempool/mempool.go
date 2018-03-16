@@ -45,14 +45,14 @@ Garbage collection of old elements from mempool.txs is handlde via
 the DetachPrev() call, which makes old elements not reachable by
 peer broadcastTxRoutine() automatically garbage collected.
 
-TODO: Better handle abci client errors. (make it automatically handle connection errors)
+TODO: Better handle app client errors. (make it automatically handle connection errors)
 
 */
 
 const cacheSize = 100000
 
 // Mempool is an ordered in-memory pool for transactions before they are proposed in a consensus
-// round. Transaction validity is checked using the CheckTx abci message before the transaction is
+// round. Transaction validity is checked using the CheckTx app message before the transaction is
 // added to the pool. The Mempool uses a concurrent list structure for storing transactions that
 // can be efficiently accessed by multiple concurrent readers.
 type Mempool struct {

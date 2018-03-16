@@ -13,7 +13,7 @@ var (
 	ErrTempBlock = errs(10006, "您已暂时被禁止访问，请稍后再试")
 
 
-	// abci error definition, 12000-12999
+	// app error definition, 12000-12999
 	ErrTransactionDecode = errs(12001, "transaction decode error")
 	ErrSignAccountNotExist = errs(12002, "ok")
 	ErrUnknownMathod = errs(12003, "未知方法调用")

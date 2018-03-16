@@ -17,9 +17,9 @@ func AddNodeFlags(cmd *cobra.Command) {
 	// node flags
 	cmd.Flags().Bool("fast_sync", config.FastSync, "Fast blockchain syncing")
 
-	// abci flags
+	// app flags
 	cmd.Flags().String("proxy_app", config.ProxyApp, "Proxy app address, or 'nilapp' or 'dummy' for local testing.")
-	cmd.Flags().String("abci", config.ABCI, "Specify abci transport (socket | grpc)")
+	cmd.Flags().String("app", config.ABCI, "Specify app transport (socket | grpc)")
 
 	// rpc flags
 	cmd.Flags().String("rpc.laddr", config.RPC.ListenAddress, "RPC listen address. Port required")

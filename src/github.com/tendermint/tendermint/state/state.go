@@ -52,7 +52,7 @@ type State struct {
 	// Merkle root of the results from executing prev block
 	LastResultsHash []byte
 
-	// The latest AppHash we've received from calling abci.Commit()
+	// The latest AppHash we've received from calling app.Commit()
 	AppHash []byte
 }
 

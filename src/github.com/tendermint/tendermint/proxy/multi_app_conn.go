@@ -29,7 +29,7 @@ type Handshaker interface {
 }
 
 // a multiAppConn is made of a few appConns (mempool, consensus, query)
-// and manages their underlying abci clients, including the handshake
+// and manages their underlying app clients, including the handshake
 // which ensures the app and tendermint are synced.
 // TODO: on app restart, clients must reboot together
 type multiAppConn struct {
@@ -44,7 +44,7 @@ type multiAppConn struct {
 	clientCreator ClientCreator
 }
 
-// Make all necessary abci connections to the application
+// Make all necessary app connections to the application
 func NewMultiAppConn(clientCreator ClientCreator, handshaker Handshaker) *multiAppConn {
 	multiAppConn := &multiAppConn{
 		handshaker:    handshaker,
@@ -75,7 +75,7 @@ func (app *multiAppConn) OnStart() error {
 	if err != nil {
 		return errors.Wrap(err, "Error creating ABCI client (query connection)")
 	}
-	querycli.SetLogger(app.Logger.With("module", "abci-client", "connection", "query"))
+	querycli.SetLogger(app.Logger.With("module", "app-client", "connection", "query"))
 	if err := querycli.Start(); err != nil {
 		return errors.Wrap(err, "Error starting ABCI client (query connection)")
 	}
@@ -86,7 +86,7 @@ func (app *multiAppConn) OnStart() error {
 	if err != nil {
 		return errors.Wrap(err, "Error creating ABCI client (mempool connection)")
 	}
-	memcli.SetLogger(app.Logger.With("module", "abci-client", "connection", "mempool"))
+	memcli.SetLogger(app.Logger.With("module", "app-client", "connection", "mempool"))
 	if err := memcli.Start(); err != nil {
 		return errors.Wrap(err, "Error starting ABCI client (mempool connection)")
 	}
@@ -97,7 +97,7 @@ func (app *multiAppConn) OnStart() error {
 	if err != nil {
 		return errors.Wrap(err, "Error creating ABCI client (consensus connection)")
 	}
-	concli.SetLogger(app.Logger.With("module", "abci-client", "connection", "consensus"))
+	concli.SetLogger(app.Logger.With("module", "app-client", "connection", "consensus"))
 	if err := concli.Start(); err != nil {
 		return errors.Wrap(err, "Error starting ABCI client (consensus connection)")
 	}
