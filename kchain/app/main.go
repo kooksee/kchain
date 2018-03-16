@@ -34,7 +34,7 @@ type PersistentApplication struct {
 func Run() *PersistentApplication {
 	return NewPersistentApplication(
 		"kchain",
-		cfg().Config.RootDir,
+		cfg().Config.DBDir(),
 	)
 }
 
@@ -336,10 +336,28 @@ func (app *PersistentApplication) Validators() (validators []*types.Validator) {
 func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(v.PubKey))
 
-	if v.Power < 0 {
-		state.Remove(key)
+	if v.Power == -1 {
+		// add or update validator
+		value := bytes.NewBuffer(make([]byte, 0))
+		if err := types.WriteMessage(v, value); err != nil {
+			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
+		}
+		state.Set(key, value.Bytes())
+
+		logger.Info("save node ok", "key", key)
+
 		v.Power = 0
+		app.ValUpdates = append(app.ValUpdates, v)
+		return nil
+	}
+
+	if v.Power == -2 {
+		state.Remove(key)
 		logger.Info("delete node ok", "key", key)
+
+		v.Power = 0
+		app.ValUpdates = append(app.ValUpdates, v)
+		return nil
 	}
 
 	if v.Power == 0 {
