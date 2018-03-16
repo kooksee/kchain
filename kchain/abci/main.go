@@ -34,7 +34,7 @@ type PersistentApplication struct {
 func Run() *PersistentApplication {
 	return NewPersistentApplication(
 		"kchain",
-		cfg().Config.DBDir(),
+		cfg().Config.RootDir,
 	)
 }
 
@@ -166,7 +166,9 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 			}
 		}
 	case "validator":
-		if tx.PubKey == app.GenesisValidator {
+		//logger.Error(tx.PubKey)
+		//logger.Error(app.GenesisValidator)
+		if tx.PubKey != app.GenesisValidator {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
 				Log:  "Please contact the administrator to add validator",
@@ -280,6 +282,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 // Save the validators in the merkle tree
 func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.ResponseInitChain {
 
+	logger.Info("InitChain")
 	for _, v := range req.Validators {
 		// 最高权限拥有者
 		if v.Power == 10 {
@@ -338,6 +341,7 @@ func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 		v.Power = 0
 		logger.Info("delete node ok", "key", key)
 	}
+
 	if v.Power == 0 {
 		if !state.Has(key) {
 			return errors.New(fmt.Sprintf("Cannot remove non-existent validator %X", key))

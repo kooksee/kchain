@@ -12,6 +12,7 @@ import (
 	"kchain/abci"
 
 	kn "kchain/node"
+	"encoding/hex"
 )
 
 var kcfg = cfg.GetConfig()
@@ -78,6 +79,8 @@ func NewRunNodeCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("Failed to create node: %v", err)
 			}
+
+			logger.Info(hex.EncodeToString(pvfs.PubKey.Bytes()))
 
 			// 新加入节点的过滤逻辑
 			n.Switch().SetPubKeyFilter(abciApp.PubKeyFilter)
