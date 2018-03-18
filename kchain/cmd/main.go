@@ -28,7 +28,7 @@ func main() {
 		//cmd.ServicesCmd(),
 	)
 
-	cmd1 := cli.PrepareBaseCmd(rootCmd, "TM", os.ExpandEnv("$HOME/.tendermint"))
+	cmd1 := cli.PrepareBaseCmd(rootCmd, "TM", os.ExpandEnv("$PWD/kdata"))
 	if err := cmd1.Execute(); err != nil {
 		panic(err)
 	}
