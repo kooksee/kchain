@@ -31,7 +31,7 @@ var Routes = map[string]*rpc.RPCFunc{
 	"broadcast_tx_sync":   rpc.NewRPCFunc(BroadcastTxSync, "tx"),
 	"broadcast_tx_async":  rpc.NewRPCFunc(BroadcastTxAsync, "tx"),
 
-	// app API
+	// abci API
 	"abci_query": rpc.NewRPCFunc(ABCIQuery, "path,data,height,prove"),
 	"abci_info":  rpc.NewRPCFunc(ABCIInfo, ""),
 }
@@ -39,6 +39,7 @@ var Routes = map[string]*rpc.RPCFunc{
 func AddUnsafeRoutes() {
 	// control API
 	Routes["dial_seeds"] = rpc.NewRPCFunc(UnsafeDialSeeds, "seeds")
+	Routes["dial_peers"] = rpc.NewRPCFunc(UnsafeDialPeers, "peers,persistent")
 	Routes["unsafe_flush_mempool"] = rpc.NewRPCFunc(UnsafeFlushMempool, "")
 
 	// profiler API

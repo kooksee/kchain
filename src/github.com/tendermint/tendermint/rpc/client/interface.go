@@ -6,7 +6,7 @@ The main implementation for production code is client.HTTP, which
 connects via http to the jsonrpc interface of the tendermint node.
 
 For connecting to a node running in the same process (eg. when
-compiling the app app in the same process), you can use the client.Local
+compiling the abci app in the same process), you can use the client.Local
 implementation.
 
 For mocking out server responses during testing to see behavior for
@@ -20,7 +20,6 @@ implementation.
 package client
 
 import (
-	data "github.com/tendermint/go-wire/data"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -30,12 +29,13 @@ import (
 // affects the ABCI app. In many cases this will be all we want,
 // so we can accept an interface which is easier to mock
 type ABCIClient interface {
-	// reading from app app
+	// reading from abci app
 	ABCIInfo() (*ctypes.ResultABCIInfo, error)
-	ABCIQuery(path string, data data.Bytes) (*ctypes.ResultABCIQuery, error)
-	ABCIQueryWithOptions(path string, data data.Bytes, opts ABCIQueryOptions) (*ctypes.ResultABCIQuery, error)
+	ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error)
+	ABCIQueryWithOptions(path string, data cmn.HexBytes,
+		opts ABCIQueryOptions) (*ctypes.ResultABCIQuery, error)
 
-	// writing to app app
+	// writing to abci app
 	BroadcastTxCommit(tx types.Tx) (*ctypes.ResultBroadcastTxCommit, error)
 	BroadcastTxAsync(tx types.Tx) (*ctypes.ResultBroadcastTx, error)
 	BroadcastTxSync(tx types.Tx) (*ctypes.ResultBroadcastTx, error)

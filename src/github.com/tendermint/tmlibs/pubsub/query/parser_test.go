@@ -37,13 +37,13 @@ func TestParser(t *testing.T) {
 		{"NewBlock", false},
 		{"", false},
 
-		{"tm.events.type='NewBlock' AND app.account.name='Igor'", true},
+		{"tm.events.type='NewBlock' AND abci.account.name='Igor'", true},
 		{"tm.events.type='NewBlock' AND", false},
 		{"tm.events.type='NewBlock' AN", false},
 		{"tm.events.type='NewBlock' AN tm.events.type='NewBlockHeader'", false},
 		{"AND tm.events.type='NewBlock' ", false},
 
-		{"app.account.name CONTAINS 'Igor'", true},
+		{"abci.account.name CONTAINS 'Igor'", true},
 
 		{"tx.date > DATE 2013-05-03", true},
 		{"tx.date < DATE 2013-05-03", true},

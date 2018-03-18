@@ -19,9 +19,9 @@ func TestExample(t *testing.T) {
 
 	ctx := context.Background()
 	ch := make(chan interface{}, 1)
-	err := s.Subscribe(ctx, "example-client", query.MustParse("app.account.name='John'"), ch)
+	err := s.Subscribe(ctx, "example-client", query.MustParse("abci.account.name='John'"), ch)
 	require.NoError(t, err)
-	err = s.PublishWithTags(ctx, "Tombstone", map[string]interface{}{"app.account.name": "John"})
+	err = s.PublishWithTags(ctx, "Tombstone", map[string]interface{}{"abci.account.name": "John"})
 	require.NoError(t, err)
 	assertReceive(t, "Tombstone", ch)
 }

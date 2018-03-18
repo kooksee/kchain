@@ -17,9 +17,9 @@ func AddNodeFlags(cmd *cobra.Command) {
 	// node flags
 	cmd.Flags().Bool("fast_sync", config.FastSync, "Fast blockchain syncing")
 
-	// app flags
+	// abci flags
 	cmd.Flags().String("proxy_app", config.ProxyApp, "Proxy app address, or 'nilapp' or 'dummy' for local testing.")
-	cmd.Flags().String("app", config.ABCI, "Specify app transport (socket | grpc)")
+	cmd.Flags().String("abci", config.ABCI, "Specify abci transport (socket | grpc)")
 
 	// rpc flags
 	cmd.Flags().String("rpc.laddr", config.RPC.ListenAddress, "RPC listen address. Port required")
@@ -29,8 +29,10 @@ func AddNodeFlags(cmd *cobra.Command) {
 	// p2p flags
 	cmd.Flags().String("p2p.laddr", config.P2P.ListenAddress, "Node listen address. (0.0.0.0:0 means any interface, any port)")
 	cmd.Flags().String("p2p.seeds", config.P2P.Seeds, "Comma delimited host:port seed nodes")
+	cmd.Flags().String("p2p.persistent_peers", config.P2P.PersistentPeers, "Comma delimited host:port persistent peers")
 	cmd.Flags().Bool("p2p.skip_upnp", config.P2P.SkipUPNP, "Skip UPNP configuration")
 	cmd.Flags().Bool("p2p.pex", config.P2P.PexReactor, "Enable/disable Peer-Exchange")
+	cmd.Flags().Bool("p2p.seed_mode", config.P2P.SeedMode, "Enable/disable seed mode")
 
 	// consensus flags
 	cmd.Flags().Bool("consensus.create_empty_blocks", config.Consensus.CreateEmptyBlocks, "Set this to false to only produce blocks when there are txs or when the AppHash changes")

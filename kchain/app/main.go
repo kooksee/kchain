@@ -10,24 +10,61 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
-	"github.com/tendermint/iavl"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
 
 	kcfg "kchain/types/cfg"
 	"kchain/types/cnst"
 	"kchain/types/code"
+	"encoding/binary"
 )
 
 //-----------------------------------------
+
+var (
+	stateKey        = []byte("stateKey")
+	kvPairPrefixKey = []byte("kvPairKey:")
+)
+
+func prefixKey(key []byte) []byte {
+	return append(kvPairPrefixKey, key...)
+}
+
+type State struct {
+	db      dbm.DB
+	Size    int64  `json:"size"`
+	Height  int64  `json:"height"`
+	AppHash []byte `json:"app_hash"`
+}
+
+func loadState(db dbm.DB) State {
+	stateBytes := db.Get(stateKey)
+	var state State
+	if len(stateBytes) != 0 {
+		err := json.Unmarshal(stateBytes, &state)
+		if err != nil {
+			panic(err)
+		}
+	}
+	state.db = db
+	return state
+}
+
+func saveState(state State) {
+	stateBytes, err := json.Marshal(state)
+	if err != nil {
+		panic(err)
+	}
+	state.db.Set(stateKey, stateBytes)
+}
 
 var _ types.Application = (*PersistentApplication)(nil)
 
 type PersistentApplication struct {
 	types.BaseApplication
-	ValUpdates       []*types.Validator
+	ValUpdates       []types.Validator
 	GenesisValidator string
-	blockHeader      *types.Header
+	blockHeader      types.Header
 	blockhash        []byte
 }
 
@@ -43,11 +80,10 @@ func NewPersistentApplication(name, dbDir string) *PersistentApplication {
 
 	db, err := dbm.NewGoLevelDB(name, dbDir)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
-	state = iavl.NewVersionedTree(0, db)
-	state.Load()
+	state = loadState(db)
 
 	return &PersistentApplication{}
 }
@@ -57,22 +93,24 @@ func (app *PersistentApplication) SetLogger(l log.Logger) {
 }
 
 // 新节点连接过滤
-func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKeyEd25519) error {
+func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKey) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(pk.Bytes()))
 
-	if !state.Has(key) {
-		m := "Please contact the administrator to join the node"
-		logger.Error(m, "key", key)
-		return errors.New(m)
-	}
+	//if !state.db.Has(key) {
+	//	m := "Please contact the administrator to join the node"
+	//	logger.Error(m, "key", key)
+	//	return errors.New(m)
+	//}
+
+	logger.Error(string(key))
 	return nil
 }
 
 // 实现abci的Info协议
 func (app *PersistentApplication) Info(req types.RequestInfo) (res types.ResponseInfo) {
 	res.Data = cfg().Config.Moniker
-	res.LastBlockHeight = int64(state.LatestVersion())
-	res.LastBlockAppHash = state.Hash()
+	res.LastBlockHeight = int64(state.Height)
+	res.LastBlockAppHash = state.AppHash
 	res.Version = req.Version
 
 	return
@@ -108,12 +146,13 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 			"time":         app.blockHeader.Time,
 			"data":         tx.Value,
 		})
-		state.Set([]byte(f("%s:%s", db, tx.Key)), []byte(data))
+		state.db.Set([]byte(f("%s:%s", db, tx.Key)), []byte(data))
+		state.Size += 1
 
 	case "validator":
 		d, _ := hex.DecodeString(tx.Key)
 		d1, _ := strconv.Atoi(tx.Value)
-		if err := app.updateValidator(&types.Validator{PubKey: d, Power: int64(d1)}); err != nil {
+		if err := app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)}); err != nil {
 			return types.ResponseDeliverTx{
 				Code: code.ErrValidatorAdd.Code,
 				Log:  err.Error(),
@@ -159,7 +198,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 	switch path {
 	case "db":
 	case "const_db":
-		if state.Has([]byte(f("%s:%s", db, tx.Key) )) {
+		if state.db.Has([]byte(f("%s:%s", db, tx.Key) )) {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
 				Log:  fmt.Sprintf("the key %s already exists", tx.Key),
@@ -208,13 +247,12 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 func (app *PersistentApplication) Commit() (res types.ResponseCommit) {
 	// Save a new version for next height
 
-	height := state.LatestVersion() + 1
-	if appHash, err := state.SaveVersion(height); err != nil {
-		panic(err)
-	} else {
-		logger.Info("Commit block", "height", height, "root", hex.EncodeToString(appHash))
-		return types.ResponseCommit{Code: code.Ok.Code, Data: appHash}
-	}
+	appHash := make([]byte, 8)
+	binary.PutVarint(appHash, state.Size)
+	state.AppHash = appHash
+	state.Height += 1
+	saveState(state)
+	return types.ResponseCommit{Data: appHash}
 }
 
 func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.ResponseQuery) {
@@ -231,11 +269,12 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 
 	switch path {
 	case "db", "const_db":
-		index, value := state.Get([]byte(f("%s:%s", db, string(key))))
+		value := state.db.Get([]byte(f("%s:%s", db, string(key))))
 		res.Code = types.CodeTypeOK
-		res.Index = int64(index)
+		res.Index = state.Size
 		res.Key = key
 		res.Value = value
+		res.Height = state.Height
 		if value != nil {
 			res.Log = "exists"
 		} else {
@@ -252,23 +291,23 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			return
 		}
 
-		s_f := s[0]
-		s_t := s[1]
-		i_f, _ := strconv.Atoi(s_f)
-		i_t, _ := strconv.Atoi(s_t)
+		//s_f := s[0]
+		//s_t := s[1]
+		//i_f, _ := strconv.Atoi(s_f)
+		//i_t, _ := strconv.Atoi(s_t)
 
 		d := []string{}
 
-		for i := i_f; i <= i_t; i++ {
-
-			if k, _ := state.GetByIndex(i); k != nil {
-				if !bytes.HasPrefix(k, []byte("val:")) && !bytes.HasPrefix(k, []byte("__app:")) {
-					d = append(d, string(k))
-				}
-			} else {
-				continue
-			}
-		}
+		//for i := i_f; i <= i_t; i++ {
+		//
+		//	if k, _ := state.db.GetByIndex(i); k != nil {
+		//		if !bytes.HasPrefix(k, []byte("val:")) && !bytes.HasPrefix(k, []byte("__app:")) {
+		//			d = append(d, string(k))
+		//		}
+		//	} else {
+		//		continue
+		//	}
+		//}
 
 		res.Value, _ = json.Marshal(d)
 
@@ -287,7 +326,7 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 		// 最高权限拥有者
 		if v.Power == 10 {
 
-			state.Set([]byte("__app:genesis_validator"), v.PubKey)
+			state.db.Set([]byte("__app:genesis_validator"), v.PubKey)
 
 			app.GenesisValidator = hex.EncodeToString(v.PubKey)
 		}
@@ -300,11 +339,11 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 }
 
 func (app *PersistentApplication) BeginBlock(req types.RequestBeginBlock) types.ResponseBeginBlock {
-	app.ValUpdates = make([]*types.Validator, 0)
+	app.ValUpdates = make([]types.Validator, 0)
 	app.blockHeader = req.Header
 	app.blockhash = req.Hash
 
-	_, d := state.Get([]byte("__app:genesis_validator"))
+	d := state.db.Get([]byte("__app:genesis_validator"))
 	app.GenesisValidator = hex.EncodeToString(d)
 
 	return types.ResponseBeginBlock{}
@@ -317,32 +356,19 @@ func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.Resp
 //---------------------------------------------
 
 // update validators
-func (app *PersistentApplication) Validators() (validators []*types.Validator) {
-	state.Iterate(func(key, value []byte) bool {
-		if strings.HasPrefix(string(key), cnst.ValidatorPrefix) {
-			validator := new(types.Validator)
-			err := types.ReadMessage(bytes.NewBuffer(value), validator)
-			if err != nil {
-				panic(err)
-			}
-			validators = append(validators, validator)
-		}
-		return false
-	})
-	return
-}
 
 // add, update, or remove a validator
-func (app *PersistentApplication) updateValidator(v *types.Validator) error {
+func (app *PersistentApplication) updateValidator(v types.Validator) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(v.PubKey))
 
 	if v.Power == -1 {
 		// add or update validator
 		value := bytes.NewBuffer(make([]byte, 0))
-		if err := types.WriteMessage(v, value); err != nil {
+		if err := types.WriteMessage(&v, value); err != nil {
 			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
 		}
-		state.Set(key, value.Bytes())
+		state.db.Set(key, value.Bytes())
+		state.Size += 1
 
 		logger.Info("save node ok", "key", key)
 
@@ -352,7 +378,8 @@ func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 	}
 
 	if v.Power == -2 {
-		state.Remove(key)
+		state.db.Delete(key)
+		state.Size += 1
 		logger.Info("delete node ok", "key", key)
 
 		v.Power = 0
@@ -361,16 +388,17 @@ func (app *PersistentApplication) updateValidator(v *types.Validator) error {
 	}
 
 	if v.Power == 0 {
-		if !state.Has(key) {
+		if !state.db.Has(key) {
 			return errors.New(fmt.Sprintf("Cannot remove non-existent validator %X", key))
 		}
 	} else {
 		// add or update validator
 		value := bytes.NewBuffer(make([]byte, 0))
-		if err := types.WriteMessage(v, value); err != nil {
+		if err := types.WriteMessage(&v, value); err != nil {
 			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
 		}
-		state.Set(key, value.Bytes())
+		state.db.Set(key, value.Bytes())
+		state.Size += 1
 
 		logger.Info("save node ok", "key", key)
 	}

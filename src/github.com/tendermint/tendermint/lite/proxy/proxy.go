@@ -18,7 +18,11 @@ const (
 // set up the rpc routes to proxy via the given client,
 // and start up an http/rpc server on the location given by bind (eg. :1234)
 func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger) error {
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		return err
+	}
+
 	r := RPCRoutes(c)
 
 	// build the handler...
@@ -30,7 +34,7 @@ func StartProxy(c rpcclient.Client, listenAddr string, logger log.Logger) error 
 	core.SetLogger(logger)
 	mux.HandleFunc(wsEndpoint, wm.WebsocketHandler)
 
-	_, err := rpc.StartHTTPServer(listenAddr, mux, logger)
+	_, err = rpc.StartHTTPServer(listenAddr, mux, logger)
 
 	return err
 }
@@ -62,7 +66,7 @@ func RPCRoutes(c rpcclient.Client) map[string]*rpc.RPCFunc {
 		"broadcast_tx_sync":   rpc.NewRPCFunc(c.BroadcastTxSync, "tx"),
 		"broadcast_tx_async":  rpc.NewRPCFunc(c.BroadcastTxAsync, "tx"),
 
-		// app API
+		// abci API
 		"abci_query": rpc.NewRPCFunc(c.ABCIQuery, "path,data,prove"),
 		"abci_info":  rpc.NewRPCFunc(c.ABCIInfo, ""),
 	}

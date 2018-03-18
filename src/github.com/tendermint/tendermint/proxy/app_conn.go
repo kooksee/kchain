@@ -6,7 +6,7 @@ import (
 )
 
 //----------------------------------------------------------------------------------------
-// Enforce which app msgs can be sent on a connection at the type level
+// Enforce which abci msgs can be sent on a connection at the type level
 
 type AppConnConsensus interface {
 	SetResponseCallback(abcicli.Callback)

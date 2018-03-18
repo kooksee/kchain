@@ -28,7 +28,7 @@ func (t *Transaction) Verify() error {
 	}
 
 	// 检查发送tx的节点有没有在区块链中
-	if !state.Has([]byte(cnst.ValidatorPrefix + t.PubKey)) {
+	if !state.db.Has([]byte(cnst.ValidatorPrefix + t.PubKey)) {
 		return errors.New(f("the node %s does not exist", t.PubKey))
 	}
 

@@ -25,6 +25,40 @@ BUG FIXES:
 - Graceful handling/recovery for apps that have non-determinism or fail to halt
 - Graceful handling/recovery for violations of safety, or liveness
 
+## 0.16.0 (February 20th, 2017)
+
+BREAKING CHANGES:
+- [config] use $TMHOME/config for all config and json files
+- [p2p] old `--p2p.seeds` is now `--p2p.persistent_peers` (persistent peers to which TM will always connect to)
+- [p2p] now `--p2p.seeds` only used for getting addresses (if addrbook is empty; not persistent)
+- [p2p] NodeInfo: remove RemoteAddr and add Channels
+    - we must have at least one overlapping channel with peer
+    - we only send msgs for channels the peer advertised
+- [p2p/conn] pong timeout
+- [lite] comment out IAVL related code
+
+FEATURES:
+- [p2p] added new `/dial_peers&persistent=_` **unsafe** endpoint
+- [p2p] persistent node key in `$THMHOME/config/node_key.json`
+- [p2p] introduce peer ID and authenticate peers by ID using addresses like `ID@IP:PORT`
+- [p2p/pex] new seed mode crawls the network and serves as a seed.
+- [config] MempoolConfig.CacheSize
+- [config] P2P.SeedMode (`--p2p.seed_mode`)
+
+IMPROVEMENT:
+- [p2p/pex] stricter rules in the PEX reactor for better handling of abuse
+- [p2p] various improvements to code structure including subpackages for `pex` and `conn`
+- [docs] new spec!
+- [all] speed up the tests!
+
+BUG FIX:
+- [blockchain] StopPeerForError on timeout
+- [consensus] StopPeerForError on a bad Maj23 message
+- [state] flush mempool conn before calling commit
+- [types] fix priv val signing things that only differ by timestamp
+- [mempool] fix memory leak causing zombie peers
+- [p2p/conn] fix potential deadlock
+
 ## 0.15.0 (December 29, 2017)
 
 BREAKING CHANGES:
@@ -74,14 +108,14 @@ BUG FIXES:
 ## 0.13.0 (December 6, 2017)
 
 BREAKING CHANGES:
-- app: update to v0.8 using gogo/protobuf; includes tx tags, vote info in RequestBeginBlock, data.Bytes everywhere, use int64, etc.
+- abci: update to v0.8 using gogo/protobuf; includes tx tags, vote info in RequestBeginBlock, data.Bytes everywhere, use int64, etc.
 - types: block heights are now `int64` everywhere
 - types & node: EventSwitch and EventCache have been replaced by EventBus and EventBuffer; event types have been overhauled
 - node: EventSwitch methods now refer to EventBus
 - rpc/lib/types: RPCResponse is no longer a pointer; WSRPCConnection interface has been modified
 - rpc/client: WaitForOneEvent takes an EventsClient instead of types.EventSwitch
 - rpc/client: Add/RemoveListenerForEvent are now Subscribe/Unsubscribe
-- rpc/core/types: ResultABCIQuery wraps an app.ResponseQuery
+- rpc/core/types: ResultABCIQuery wraps an abci.ResponseQuery
 - rpc: `/subscribe` and `/unsubscribe` take `query` arg instead of `event`
 - rpc: `/status` returns the LatestBlockTime in human readable form instead of in nanoseconds
 - mempool: cached transactions return an error instead of an ABCI response with BadNonce
@@ -151,7 +185,7 @@ BUG FIXES:
 
 BREAKING:
  - genesis file: validator `amount` is now `power`
- - app: Info, BeginBlock, InitChain all take structs
+ - abci: Info, BeginBlock, InitChain all take structs
  - rpc: various changes to match JSONRPC spec (http://www.jsonrpc.org/specification), including breaking ones:
     - requests that previously returned HTTP code 4XX now return 200 with an error code in the JSONRPC.
     - `rpctypes.RPCResponse` uses new `RPCError` type instead of `string`.

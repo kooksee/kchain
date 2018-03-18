@@ -2,7 +2,6 @@ package app
 
 import (
 	"github.com/json-iterator/go"
-	"github.com/tendermint/iavl"
 	"github.com/tendermint/tmlibs/log"
 
 	kts "kchain/types"
@@ -13,7 +12,7 @@ import (
 var (
 	cfg    = kcfg.GetConfig()
 	json   = jsoniter.ConfigCompatibleWithStandardLibrary
-	state  *iavl.VersionedTree
+	state  State
 	logger log.Logger
 )
 

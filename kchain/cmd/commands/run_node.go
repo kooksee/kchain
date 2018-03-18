@@ -70,7 +70,6 @@ func NewRunNodeCmd() *cobra.Command {
 			n, err := kn.NewNode(
 				config,
 				pvfs,
-				pvfs,
 				proxy.NewLocalClientCreator(abciApp),
 				kn.DefaultGenesisDocProviderFunc(config),
 				kn.DefaultDBProvider,
@@ -83,7 +82,7 @@ func NewRunNodeCmd() *cobra.Command {
 			logger.Info(hex.EncodeToString(pvfs.PubKey.Bytes()))
 
 			// 新加入节点的过滤逻辑
-			n.Switch().SetPubKeyFilter(abciApp.PubKeyFilter)
+			//n.Switch().SetPubKeyFilter(abciApp.PubKeyFilter)
 
 			if err := n.Start(); err != nil {
 				return fmt.Errorf("Failed to start node: %v", err)

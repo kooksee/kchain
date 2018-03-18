@@ -28,7 +28,7 @@ func newMempoolWithApp(cc proxy.ClientCreator) *Mempool {
 	config := cfg.ResetTestRoot("mempool_test")
 
 	appConnMem, _ := cc.NewABCIClient()
-	appConnMem.SetLogger(log.TestingLogger().With("module", "app-client", "connection", "mempool"))
+	appConnMem.SetLogger(log.TestingLogger().With("module", "abci-client", "connection", "mempool"))
 	err := appConnMem.Start()
 	if err != nil {
 		panic(err)
@@ -122,7 +122,7 @@ func TestSerialReap(t *testing.T) {
 
 	mempool := newMempoolWithApp(cc)
 	appConnCon, _ := cc.NewABCIClient()
-	appConnCon.SetLogger(log.TestingLogger().With("module", "app-client", "connection", "consensus"))
+	appConnCon.SetLogger(log.TestingLogger().With("module", "abci-client", "connection", "consensus"))
 	err := appConnCon.Start()
 	require.Nil(t, err)
 
@@ -185,7 +185,7 @@ func TestSerialReap(t *testing.T) {
 			t.Errorf("Client error committing: %v", err)
 		}
 		if len(res.Data) != 8 {
-			t.Errorf("Error committing. Hash:%X log:%v", res.Data, res.Log)
+			t.Errorf("Error committing. Hash:%X", res.Data)
 		}
 	}
 
@@ -236,12 +236,13 @@ func TestMempoolCloseWAL(t *testing.T) {
 	require.Equal(t, 0, len(m1), "no matches yet")
 
 	// 3. Create the mempool
-	wcfg := *(cfg.DefaultMempoolConfig())
+	wcfg := cfg.DefaultMempoolConfig()
 	wcfg.RootDir = rootDir
 	app := dummy.NewDummyApplication()
 	cc := proxy.NewLocalClientCreator(app)
 	appConnMem, _ := cc.NewABCIClient()
-	mempool := NewMempool(&wcfg, appConnMem, 10)
+	mempool := NewMempool(wcfg, appConnMem, 10)
+	mempool.InitWAL()
 
 	// 4. Ensure that the directory contains the WAL file
 	m2, err := filepath.Glob(filepath.Join(rootDir, "*"))

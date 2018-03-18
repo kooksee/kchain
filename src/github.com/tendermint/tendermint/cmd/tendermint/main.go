@@ -2,10 +2,12 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/tendermint/tmlibs/cli"
 
 	cmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+	cfg "github.com/tendermint/tendermint/config"
 	nm "github.com/tendermint/tendermint/node"
 )
 
@@ -27,7 +29,7 @@ func main() {
 	// NOTE:
 	// Users wishing to:
 	//	* Use an external signer for their validators
-	//	* Supply an in-proc app app
+	//	* Supply an in-proc abci app
 	//	* Supply a genesis doc file from another source
 	//	* Provide their own DB implementation
 	// can copy this file and use something other than the
@@ -37,7 +39,7 @@ func main() {
 	// Create & start node
 	rootCmd.AddCommand(cmd.NewRunNodeCmd(nodeFunc))
 
-	cmd := cli.PrepareBaseCmd(rootCmd, "TM", os.ExpandEnv("$HOME/.tendermint"))
+	cmd := cli.PrepareBaseCmd(rootCmd, "TM", os.ExpandEnv(filepath.Join("$HOME", cfg.DefaultTendermintDir)))
 	if err := cmd.Execute(); err != nil {
 		panic(err)
 	}

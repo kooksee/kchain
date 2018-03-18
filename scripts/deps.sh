@@ -6,11 +6,12 @@ github.com/json-iterator/go
 github.com/shopspring/decimal
 github.com/spf13/cobra
 github.com/spf13/viper
-github.com/tendermint/app
+github.com/tendermint/abci
 github.com/tendermint/tendermint
 github.com/tendermint/tmlibs
 golang.org/x/crypto
 github.com/ebuchman/fail-test
+github.com/agl/ed25519
 github.com/fsnotify/fsnotify
 github.com/gin-contrib/sse
 github.com/go-kit/kit/log
@@ -52,6 +53,8 @@ github.com/go-playground/universal-translator
 github.com/go-playground/locales
 
 github.com/v2pro/plz/reflect2
+github.com/go-kit/kit/log
+golang.org/x/crypto
 """
 
 echo $a | xargs gopm get -l
