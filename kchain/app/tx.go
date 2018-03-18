@@ -7,8 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"encoding/hex"
 	"fmt"
-	"time"
-	"kchain/types/cnst"
 )
 
 // FromBytes 解析Transaction
@@ -28,14 +26,14 @@ func (t *Transaction) Verify() error {
 	}
 
 	// 检查发送tx的节点有没有在区块链中
-	if !state.db.Has([]byte(cnst.ValidatorPrefix + t.PubKey)) {
-		return errors.New(f("the node %s does not exist", t.PubKey))
-	}
+	//if !state.db.Has([]byte(cnst.ValidatorPrefix + t.PubKey)) {
+	//	return errors.New(f("the node %s does not exist", t.PubKey))
+	//}
 
 	// 事务超过一分钟没有被确认，则认定为超时
-	if time.Now().Unix()-t.Timestamp > int64(time.Minute*1) {
-		return errors.New("transaction timeout")
-	}
+	//if time.Now().Unix()-t.Timestamp > int64(time.Minute*1) {
+	//	return errors.New("transaction timeout")
+	//}
 
 	// 区块签名验证
 	d, _ := hex.DecodeString(t.PubKey)

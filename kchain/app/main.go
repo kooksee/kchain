@@ -271,7 +271,6 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 	case "db", "const_db":
 		value := state.db.Get([]byte(f("%s:%s", db, string(key))))
 		res.Code = types.CodeTypeOK
-		res.Index = state.Size
 		res.Key = key
 		res.Value = value
 		res.Height = state.Height
