@@ -24,6 +24,8 @@ import (
 var (
 	stateKey        = []byte("stateKey")
 	kvPairPrefixKey = []byte("kvPairKey:")
+	dataHeight      = "dataHeight:"
+	lastDataHeight  = []byte("dataHeight:99999999999999999999999999999")
 )
 
 func prefixKey(key []byte) []byte {
@@ -96,18 +98,17 @@ func (app *PersistentApplication) SetLogger(l log.Logger) {
 func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKey) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(pk.Bytes()))
 
-	//if !state.db.Has(key) {
-	//	m := "Please contact the administrator to join the node"
-	//	logger.Error(m, "key", key)
-	//	return errors.New(m)
-	//}
-
-	logger.Error(string(key))
+	if !state.db.Has(key) {
+		m := "Please contact the administrator to join the node"
+		logger.Error(m, "key", key)
+		return errors.New(m)
+	}
 	return nil
 }
 
 // 实现abci的Info协议
 func (app *PersistentApplication) Info(req types.RequestInfo) (res types.ResponseInfo) {
+
 	res.Data = cfg().Config.Moniker
 	res.LastBlockHeight = int64(state.Height)
 	res.LastBlockAppHash = state.AppHash
@@ -139,15 +140,19 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 
 	switch path {
 	case "db", "const_db":
-		data, _ := json.MarshalToString(map[string]interface{}{
+		data, _ := json.Marshal(map[string]interface{}{
 			"sender":       tx.PubKey,
 			"block_height": app.blockHeader.Height,
+			"data_height":  state.Size,
 			"block_hash":   hex.EncodeToString(app.blockhash),
 			"time":         app.blockHeader.Time,
 			"data":         tx.Value,
 		})
-		state.db.Set([]byte(f("%s:%s", db, tx.Key)), []byte(data))
+
+		k := []byte(f("%s:%s", db, tx.Key))
+		state.db.Set(k, data)
 		state.Size += 1
+		state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), k)
 
 	case "validator":
 		d, _ := hex.DecodeString(tx.Key)
@@ -205,8 +210,6 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 			}
 		}
 	case "validator":
-		//logger.Error(tx.PubKey)
-		//logger.Error(app.GenesisValidator)
 		if tx.PubKey != app.GenesisValidator {
 			return types.ResponseCheckTx{
 				Code: code.ErrTransactionVerify.Code,
@@ -225,6 +228,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 				Log:  err.Error(),
 			}
 		} else {
+			// power等于10是最高的权限
 			if d > 9 {
 				return types.ResponseCheckTx{
 					Code: code.ErrVerify.Code,
@@ -257,7 +261,7 @@ func (app *PersistentApplication) Commit() (res types.ResponseCommit) {
 
 func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.ResponseQuery) {
 	var (
-		key = reqQuery.Data
+		key = string(reqQuery.Data)
 	)
 
 	d := strings.Split(reqQuery.Path, ".")
@@ -269,12 +273,9 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 
 	switch path {
 	case "db", "const_db":
-		value := state.db.Get([]byte(f("%s:%s", db, string(key))))
 		res.Code = types.CodeTypeOK
-		res.Key = key
-		res.Value = value
-		res.Height = state.Height
-		if value != nil {
+		res.Value = state.db.Get([]byte(f("%s:%s", db, key)))
+		if res.Value != nil {
 			res.Log = "exists"
 		} else {
 			res.Log = "does not exist"
@@ -282,7 +283,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 
 	case "keys":
 
-		s := strings.Split(string(key), ":")
+		s := strings.Split(key, ":")
 
 		if len(s) != 2 {
 			res.Code = code.ErrTransactionDecode.Code
@@ -290,23 +291,34 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			return
 		}
 
-		//s_f := s[0]
-		//s_t := s[1]
-		//i_f, _ := strconv.Atoi(s_f)
-		//i_t, _ := strconv.Atoi(s_t)
+		s_f := s[0]
+		s_t := s[1]
+		i_f, _ := strconv.Atoi(s_f)
+		i_t, _ := strconv.Atoi(s_t)
 
 		d := []string{}
 
-		//for i := i_f; i <= i_t; i++ {
-		//
-		//	if k, _ := state.db.GetByIndex(i); k != nil {
-		//		if !bytes.HasPrefix(k, []byte("val:")) && !bytes.HasPrefix(k, []byte("__app:")) {
-		//			d = append(d, string(k))
-		//		}
-		//	} else {
-		//		continue
-		//	}
-		//}
+		iter := state.db.Iterator([]byte(f("%s%d", dataHeight, i_f)), []byte(f("%s%d", dataHeight, i_t)))
+		for {
+			if iter.Valid() {
+				v := state.db.Get(iter.Key())
+				if v == nil {
+					continue
+				}
+				if bytes.HasPrefix(v, []byte("__app:")) {
+					continue
+				}
+
+				if bytes.HasPrefix(v, []byte(cnst.ValidatorPrefix)) {
+					continue
+				}
+
+				d = append(d, string(v))
+				iter.Next()
+			} else {
+				break
+			}
+		}
 
 		res.Value, _ = json.Marshal(d)
 
@@ -322,6 +334,7 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 
 	logger.Info("InitChain")
 	for _, v := range req.Validators {
+
 		// 最高权限拥有者
 		if v.Power == 10 {
 
@@ -354,20 +367,20 @@ func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.Resp
 
 //---------------------------------------------
 
-// update validators
-
-// add, update, or remove a validator
+// 更新validator
 func (app *PersistentApplication) updateValidator(v types.Validator) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(v.PubKey))
 
+	// power等于-1的时候,开放节点的权限
 	if v.Power == -1 {
-		// add or update validator
 		value := bytes.NewBuffer(make([]byte, 0))
 		if err := types.WriteMessage(&v, value); err != nil {
 			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
 		}
+
 		state.db.Set(key, value.Bytes())
 		state.Size += 1
+		state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), key)
 
 		logger.Info("save node ok", "key", key)
 
@@ -376,9 +389,9 @@ func (app *PersistentApplication) updateValidator(v types.Validator) error {
 		return nil
 	}
 
+	// power等于-2的时候,删除节点
 	if v.Power == -2 {
 		state.db.Delete(key)
-		state.Size += 1
 		logger.Info("delete node ok", "key", key)
 
 		v.Power = 0
@@ -386,23 +399,20 @@ func (app *PersistentApplication) updateValidator(v types.Validator) error {
 		return nil
 	}
 
-	if v.Power == 0 {
-		if !state.db.Has(key) {
-			return errors.New(fmt.Sprintf("Cannot remove non-existent validator %X", key))
-		}
-	} else {
-		// add or update validator
+	// power小于等于0的时候,删除验证节点
+	if v.Power >= 0 {
 		value := bytes.NewBuffer(make([]byte, 0))
 		if err := types.WriteMessage(&v, value); err != nil {
 			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
 		}
+
 		state.db.Set(key, value.Bytes())
 		state.Size += 1
+		state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), key)
 
 		logger.Info("save node ok", "key", key)
+
+		app.ValUpdates = append(app.ValUpdates, v)
 	}
-
-	app.ValUpdates = append(app.ValUpdates, v)
-
 	return nil
 }

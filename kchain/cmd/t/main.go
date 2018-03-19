@@ -1,17 +1,37 @@
 package main
 
 import (
-	"encoding/hex"
+	dbm "github.com/tendermint/tmlibs/db"
 	"fmt"
-	crypto "github.com/tendermint/go-crypto"
 )
 
 func main() {
 
-	d, _ := hex.DecodeString("016A66FE139DE9CC71DE4B940775504F8EDCB6962C6C6B291A89D703962EFCD3B9")
-	if pk, err := crypto.PubKeyFromBytes(d); err != nil {
+	db, err := dbm.NewGoLevelDB("hello", "hello")
+	if err != nil {
 		fmt.Println(err.Error())
-	} else {
-		fmt.Println(pk)
+	}
+
+	db.Set([]byte("hello:1"), []byte("1"))
+	db.Set([]byte("hello:2"), []byte("1"))
+	db.Set([]byte("hello:3"), []byte("1"))
+	db.Set([]byte("hello:0"), []byte("1"))
+	db.Set([]byte("hello:2"), []byte("1"))
+	db.Set([]byte("hello:9"), []byte("1"))
+	db.Set([]byte("tello:4"), []byte("1"))
+	db.Set([]byte("3ello:4"), []byte("1"))
+	db.Set([]byte("oello:4"), []byte("1"))
+	db.Set([]byte("aello:4"), []byte("1"))
+	db.Set([]byte("height:4"), []byte("1nuhuhuhu"))
+
+	i := db.Iterator([]byte("hello:3"), []byte("hello:999999999999999999999999999"))
+	for {
+		if i.Valid() {
+			fmt.Println(string(i.Key()))
+			i.Next()
+		}else{
+			break
+		}
+
 	}
 }
