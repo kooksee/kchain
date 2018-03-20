@@ -126,8 +126,10 @@ func (app *PersistentApplication) SetOption(req types.RequestSetOption) types.Re
 func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDeliverTx {
 	tx := NewTransaction()
 
+	m, _ := hex.DecodeString(string(txBytes))
+
 	// decode tx
-	if err := tx.FromBytes(txBytes); err != nil {
+	if err := tx.FromBytes(m); err != nil {
 		return types.ResponseDeliverTx{
 			Code: code.ErrTransactionDecode.Code,
 			Log:  err.Error(),
@@ -140,13 +142,16 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 
 	switch path {
 	case "db", "const_db":
+
+		var i interface{}
+		json.UnmarshalFromString(tx.Value, &i)
 		data, _ := json.Marshal(map[string]interface{}{
 			"sender":       tx.PubKey,
 			"block_height": app.blockHeader.Height,
 			"data_height":  state.Size,
 			"block_hash":   hex.EncodeToString(app.blockhash),
 			"time":         app.blockHeader.Time,
-			"data":         tx.Value,
+			"data":         i,
 		})
 
 		k := []byte(f("%s:%s", db, tx.Key))
@@ -170,10 +175,12 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 
 // 实现abci的CheckTx协议
 func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx {
+
 	tx := NewTransaction()
+	m, _ := hex.DecodeString(string(txBytes))
 
 	// decode tx
-	if err := tx.FromBytes(txBytes); err != nil {
+	if err := tx.FromBytes(m); err != nil {
 		return types.ResponseCheckTx{
 			Code: code.ErrTransactionDecode.Code,
 			Log:  err.Error(),
@@ -276,8 +283,10 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		res.Code = types.CodeTypeOK
 		res.Value = state.db.Get([]byte(f("%s:%s", db, key)))
 		if res.Value != nil {
+			res.Code = 0
 			res.Log = "exists"
 		} else {
+			res.Code = 1
 			res.Log = "does not exist"
 		}
 
@@ -296,31 +305,39 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		i_f, _ := strconv.Atoi(s_f)
 		i_t, _ := strconv.Atoi(s_t)
 
-		d := []string{}
-
-		iter := state.db.Iterator([]byte(f("%s%d", dataHeight, i_f)), []byte(f("%s%d", dataHeight, i_t)))
-		for {
-			if iter.Valid() {
-				v := state.db.Get(iter.Key())
-				if v == nil {
-					continue
-				}
-				if bytes.HasPrefix(v, []byte("__app:")) {
-					continue
-				}
-
-				if bytes.HasPrefix(v, []byte(cnst.ValidatorPrefix)) {
-					continue
-				}
-
-				d = append(d, string(v))
-				iter.Next()
-			} else {
-				break
-			}
+		// 比较最大值,查询最大值为数据最大高度
+		if i_t > int(state.Size) {
+			i_t = int(state.Size)
 		}
 
-		res.Value, _ = json.Marshal(d)
+		// 最大查询范围值为1000
+		if i_t-i_f > 1000 {
+			i_t = i_f + 1000
+		}
+
+		d := []string{}
+
+		for i := i_f; i <= i_t; i++ {
+			k := []byte(f("%s%d", dataHeight, i))
+			v := state.db.Get(k)
+
+			if v == nil {
+				continue
+			}
+
+			if bytes.HasPrefix(v, []byte("__app:")) {
+				continue
+			}
+
+			if bytes.HasPrefix(v, []byte(cnst.ValidatorPrefix)) {
+				continue
+			}
+
+			d = append(d, string(v))
+		}
+
+		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
+		res.Code = 0
 
 	default:
 		res.Code = code.ErrUnknownMathod.Code
