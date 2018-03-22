@@ -25,7 +25,6 @@ var (
 	stateKey        = []byte("stateKey")
 	kvPairPrefixKey = []byte("kvPairKey:")
 	dataHeight      = "dataHeight:"
-	lastDataHeight  = []byte("dataHeight:99999999999999999999999999999")
 )
 
 func prefixKey(key []byte) []byte {
