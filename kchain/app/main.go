@@ -25,7 +25,6 @@ var (
 	stateKey        = []byte("stateKey")
 	kvPairPrefixKey = []byte("kvPairKey:")
 	dataHeight      = "dataHeight:"
-	lastDataHeight  = []byte("dataHeight:99999999999999999999999999999")
 )
 
 func prefixKey(key []byte) []byte {
@@ -141,7 +140,7 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 	db := d[1]
 
 	switch path {
-	case "db", "const_db":
+	case "db", "const_db", "admin_db":
 
 		var i interface{}
 		json.UnmarshalFromString(tx.Value, &i)
@@ -216,6 +215,15 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 				Log:  fmt.Sprintf("the key %s already exists", tx.Key),
 			}
 		}
+
+	case "admin_db":
+		if tx.PubKey != app.GenesisValidator {
+			return types.ResponseCheckTx{
+				Code: code.ErrTransactionVerify.Code,
+				Log:  "Please contact the administrator to operate the tx",
+			}
+		}
+
 	case "validator":
 		if tx.PubKey != app.GenesisValidator {
 			return types.ResponseCheckTx{
@@ -279,7 +287,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 	}
 
 	switch path {
-	case "db", "const_db":
+	case "db", "const_db", "admin_db":
 		res.Code = types.CodeTypeOK
 		res.Value = state.db.Get([]byte(f("%s:%s", db, key)))
 		if res.Value != nil {
@@ -315,7 +323,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			i_t = i_f + 1000
 		}
 
-		d := []string{}
+		d := map[string]int{}
 
 		for i := i_f; i <= i_t; i++ {
 			k := []byte(f("%s%d", dataHeight, i))
@@ -333,7 +341,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 				continue
 			}
 
-			d = append(d, string(v))
+			d[string(v)] = 1
 		}
 
 		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
