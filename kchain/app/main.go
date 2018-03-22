@@ -315,7 +315,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			i_t = i_f + 1000
 		}
 
-		d := []string{}
+		d := map[string]int{}
 
 		for i := i_f; i <= i_t; i++ {
 			k := []byte(f("%s%d", dataHeight, i))
@@ -333,7 +333,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 				continue
 			}
 
-			d = append(d, string(v))
+			d[string(v)] = 1
 		}
 
 		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
