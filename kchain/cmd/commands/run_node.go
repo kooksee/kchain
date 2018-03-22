@@ -75,6 +75,7 @@ func NewRunNodeCmd() *cobra.Command {
 				kn.DefaultDBProvider,
 				logger,
 			)
+
 			if err != nil {
 				return fmt.Errorf("Failed to create node: %v", err)
 			}
