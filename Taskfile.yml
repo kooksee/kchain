@@ -37,12 +37,12 @@ docker_build:
   cmds:
       - task: build_linux
       - docker build -t kchain .
-      - docker tag kchain registry.yuanbenlian.com/yuanben/kchain
+      - docker tag kchain registry.cn-hangzhou.aliyuncs.com/yuanben/kchain
 
 docker_push:
   desc: docker push
   cmds:
-      - docker push registry.yuanbenlian.com/yuanben/kchain
+      - docker push registry.cn-hangzhou.aliyuncs.com/yuanben/kchain
 
 docker_test:
   desc: kchain docker test
