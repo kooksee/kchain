@@ -11,7 +11,9 @@ import (
 
 	"kchain/app"
 
-	kn "kchain/node"
+	// kn "kchain/node"
+
+	kn "github.com/tendermint/tendermint/node"
 	"encoding/hex"
 )
 
@@ -20,33 +22,33 @@ var kcfg = cfg.GetConfig()
 // AddNodeFlags exposes some common configuration options on the command-line
 // These are exposed for convenience of commands embedding a tendermint node
 func AddNodeFlags(cmd *cobra.Command) *cobra.Command {
-	//_cfg := kcfg()
+	// _cfg := kcfg()
 
 	// app falgs
-	//cmd.Flags().StringVar(&_cfg.App.Addr, "addr", _cfg.App.Addr, "kchain web port")
+	// cmd.Flags().StringVar(&_cfg.App.Addr, "addr", _cfg.App.Addr, "kchain web port")
 
 	// bind flags
 	cmd.Flags().StringVar(&config.Moniker, "moniker", config.Moniker, "Node Name")
 
 	// node flags
-	//cmd.Flags().BoolVar(&config.FastSync, "fast_sync", config.FastSync, "Fast blockchain syncing")
+	// cmd.Flags().BoolVar(&config.FastSync, "fast_sync", config.FastSync, "Fast blockchain syncing")
 
 	// app flags
-	//cmd.Flags().StringVar(&config.ProxyApp, "proxy_app", config.ProxyApp, "Proxy app address, or 'nilapp' or 'dummy' for local testing.")
-	//cmd.Flags().StringVar(&config.ABCI, "app", config.ABCI, "Specify app transport (socket | grpc)")
+	// cmd.Flags().StringVar(&config.ProxyApp, "proxy_app", config.ProxyApp, "Proxy app address, or 'nilapp' or 'dummy' for local testing.")
+	// cmd.Flags().StringVar(&config.ABCI, "app", config.ABCI, "Specify app transport (socket | grpc)")
 
 	// rpc flags
-	//cmd.Flags().StringVar(&config.RPC.GRPCListenAddress, "rpc.grpc_laddr", config.RPC.GRPCListenAddress, "GRPC listen address (BroadcastTx only). Port required")
-	//cmd.Flags().BoolVar(&config.RPC.Unsafe, "rpc.unsafe", config.RPC.Unsafe, "Enabled unsafe rpc methods")
+	// cmd.Flags().StringVar(&config.RPC.GRPCListenAddress, "rpc.grpc_laddr", config.RPC.GRPCListenAddress, "GRPC listen address (BroadcastTx only). Port required")
+	// cmd.Flags().BoolVar(&config.RPC.Unsafe, "rpc.unsafe", config.RPC.Unsafe, "Enabled unsafe rpc methods")
 
 	// p2p flags
-	//cmd.Flags().StringVar(&config.P2P.ListenAddress, "p2p.laddr", config.P2P.ListenAddress, "Node listen address. (0.0.0.0:0 means any interface, any port)")
-	//cmd.Flags().StringVar(&config.P2P.Seeds, "p2p.seeds", config.P2P.Seeds, "Comma delimited host:port seed nodes")
-	//cmd.Flags().BoolVar(&config.P2P.SkipUPNP, "p2p.skip_upnp", config.P2P.SkipUPNP, "Skip UPNP configuration")
-	//cmd.Flags().BoolVar(&config.P2P.PexReactor, "p2p.pex", config.P2P.PexReactor, "Enable/disable Peer-Exchange")
+	// cmd.Flags().StringVar(&config.P2P.ListenAddress, "p2p.laddr", config.P2P.ListenAddress, "Node listen address. (0.0.0.0:0 means any interface, any port)")
+	// cmd.Flags().StringVar(&config.P2P.Seeds, "p2p.seeds", config.P2P.Seeds, "Comma delimited host:port seed nodes")
+	// cmd.Flags().BoolVar(&config.P2P.SkipUPNP, "p2p.skip_upnp", config.P2P.SkipUPNP, "Skip UPNP configuration")
+	// cmd.Flags().BoolVar(&config.P2P.PexReactor, "p2p.pex", config.P2P.PexReactor, "Enable/disable Peer-Exchange")
 
 	// consensus flags
-	//cmd.Flags().BoolVar(&config.Consensus.CreateEmptyBlocks, "consensus.create_empty_blocks", config.Consensus.CreateEmptyBlocks, "Set this to false to only produce blocks when there are txs or when the AppHash changes")
+	// cmd.Flags().BoolVar(&config.Consensus.CreateEmptyBlocks, "consensus.create_empty_blocks", config.Consensus.CreateEmptyBlocks, "Set this to false to only produce blocks when there are txs or when the AppHash changes")
 
 	return cmd
 }
@@ -83,8 +85,9 @@ func NewRunNodeCmd() *cobra.Command {
 			logger.Info(hex.EncodeToString(pvfs.PubKey.Bytes()))
 
 			// 新加入节点的过滤逻辑
-			n.Switch().SetPubKeyFilter(abciApp.PubKeyFilter)
-			
+			// n.Switch().SetPubKeyFilter(abciApp.PubKeyFilter)
+			// n.Switch().SetIDFilter()
+
 			if err := n.Start(); err != nil {
 				return fmt.Errorf("Failed to start node: %v", err)
 			} else {
