@@ -19,7 +19,7 @@ import (
 	"encoding/binary"
 )
 
-//-----------------------------------------
+// -----------------------------------------
 
 var (
 	stateKey        = []byte("stateKey")
@@ -390,7 +390,7 @@ func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.Resp
 	return types.ResponseEndBlock{ValidatorUpdates: app.ValUpdates}
 }
 
-//---------------------------------------------
+// ---------------------------------------------
 
 // 更新validator
 func (app *PersistentApplication) updateValidator(v types.Validator) error {

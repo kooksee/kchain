@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/tendermint/go-crypto"
 
-	//c1 "github.com/ethereum/go-ethereum/crypto"
+	// c1 "github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"encoding/hex"
 	"fmt"

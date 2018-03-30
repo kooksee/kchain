@@ -14,18 +14,18 @@ func main() {
 	rootCmd.AddCommand(
 		cmd.GenValidatorCmd,
 		cmd.InitFilesCmd,
-		//cmd.ProbeUpnpCmd,
-		//cmd.LiteCmd,
-		//cmd.ReplayCmd,
-		//cmd.ReplayConsoleCmd,
+		// cmd.ProbeUpnpCmd,
+		// cmd.LiteCmd,
+		// cmd.ReplayCmd,
+		// cmd.ReplayConsoleCmd,
 		cmd.ResetAllCmd,
 		cmd.ResetPrivValidatorCmd,
 		cmd.ShowValidatorCmd,
-		//cmd.TestnetFilesCmd,
+		// cmd.TestnetFilesCmd,
 		cmd.VersionCmd,
 
 		cmd.NewRunNodeCmd(),
-		//cmd.ServicesCmd(),
+		// cmd.ServicesCmd(),
 	)
 
 	cmd1 := cli.PrepareBaseCmd(rootCmd, "TM", os.ExpandEnv("$PWD/kdata"))
