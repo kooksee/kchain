@@ -354,6 +354,25 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
 		res.Code = 0
 
+	case "accounts":
+
+		d := map[string]int{}
+		for i := 0; i <= int(state.Size); i++ {
+			k := []byte(f("%s%d", dataHeight, i))
+			v := state.db.Get(k)
+
+			if v == nil {
+				continue
+			}
+
+			if bytes.HasPrefix(v, []byte(cnst.AccountPrefix)) {
+				d[string(v)] = 1
+			}
+		}
+
+		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
+		res.Code = 0
+
 	default:
 		res.Code = code.ErrUnknownMathod.Code
 		res.Log = "unknown path"

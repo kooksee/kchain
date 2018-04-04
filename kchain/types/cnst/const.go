@@ -13,6 +13,6 @@ const (
 
 	// prefix
 	DbPrefix = "db:"
-	AccountPrefix = "act:"
+	AccountPrefix = "account:"
 	ValidatorPrefix = "val:"
 )
