@@ -20,8 +20,7 @@ type Transaction1 struct {
 type Transaction struct {
 	PubKey    string `json:"pubkey,omitempty"`
 	Signature string `json:"sign,omitempty"`
-	Key       string `json:"key,omitempty"`
-	Value     string `json:"value,omitempty"`
+	Values    string `json:"values,omitempty"`
 	Path      string `json:"path,omitempty"`
 	Timestamp int64  `json:"time,omitempty"`
 }

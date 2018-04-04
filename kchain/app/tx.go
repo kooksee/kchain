@@ -20,6 +20,12 @@ func (t *Transaction) ToBytes() ([]byte, error) {
 	return json.Marshal(t)
 }
 
+func (t *Transaction) DecodeValues() map[string]interface{} {
+	d := map[string]interface{}{}
+	json.UnmarshalFromString(t.Values, &d)
+	return d
+}
+
 func (t *Transaction) Verify() error {
 
 	if t.Signature == "" || t.PubKey == "" {
@@ -40,7 +46,7 @@ func (t *Transaction) Verify() error {
 		if sig, err := crypto.SignatureFromBytes(d); err != nil {
 			return err
 		} else {
-			signMsg := crypto.Ripemd160([]byte(fmt.Sprintf("%s%d%s", t.Key, t.Timestamp, t.Value)))
+			signMsg := crypto.Ripemd160([]byte(fmt.Sprintf("%s%s%d", t.Values, t.Path, t.Timestamp)))
 			if !pk.VerifyBytes(signMsg, sig) {
 				return errors.New("transaction verify false")
 			}

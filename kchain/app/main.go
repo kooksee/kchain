@@ -142,29 +142,32 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 	switch path {
 	case "db", "const_db", "admin_db":
 
-		var i interface{}
-		json.UnmarshalFromString(tx.Value, &i)
-		data, _ := json.Marshal(map[string]interface{}{
-			"sender":       tx.PubKey,
-			"block_height": app.blockHeader.Height,
-			"data_height":  state.Size,
-			"block_hash":   hex.EncodeToString(app.blockhash),
-			"time":         app.blockHeader.Time,
-			"data":         i,
-		})
+		for k, v := range tx.DecodeValues() {
 
-		k := []byte(f("%s:%s", db, tx.Key))
-		state.db.Set(k, data)
-		state.Size += 1
-		state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), k)
+			data, _ := json.Marshal(map[string]interface{}{
+				"sender":       tx.PubKey,
+				"block_height": app.blockHeader.Height,
+				"data_height":  state.Size,
+				"block_hash":   hex.EncodeToString(app.blockhash),
+				"time":         app.blockHeader.Time,
+				"data":         v,
+			})
+
+			k := []byte(f("%s:%s", db, k))
+			state.db.Set(k, data)
+			state.Size += 1
+			state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), k)
+		}
 
 	case "validator":
-		d, _ := hex.DecodeString(tx.Key)
-		d1, _ := strconv.Atoi(tx.Value)
-		if err := app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)}); err != nil {
-			return types.ResponseDeliverTx{
-				Code: code.ErrValidatorAdd.Code,
-				Log:  err.Error(),
+		for k, v := range tx.DecodeValues() {
+			d, _ := hex.DecodeString(k)
+			d1, _ := strconv.Atoi(f("%d", v))
+			if err := app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)}); err != nil {
+				return types.ResponseDeliverTx{
+					Code: code.ErrValidatorAdd.Code,
+					Log:  err.Error(),
+				}
 			}
 		}
 	}
@@ -209,10 +212,12 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 	switch path {
 	case "db":
 	case "const_db":
-		if state.db.Has([]byte(f("%s:%s", db, tx.Key) )) {
-			return types.ResponseCheckTx{
-				Code: code.ErrTransactionVerify.Code,
-				Log:  fmt.Sprintf("the key %s already exists", tx.Key),
+		for k := range tx.DecodeValues() {
+			if state.db.Has([]byte(f("%s:%s", db, k) )) {
+				return types.ResponseCheckTx{
+					Code: code.ErrTransactionVerify.Code,
+					Log:  fmt.Sprintf("the key %s already exists", k),
+				}
 			}
 		}
 
@@ -225,29 +230,31 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 		}
 
 	case "validator":
-		if tx.PubKey != app.GenesisValidator {
-			return types.ResponseCheckTx{
-				Code: code.ErrTransactionVerify.Code,
-				Log:  "Please contact the administrator to add validator",
-			}
-		}
-		if _, err := hex.DecodeString(tx.Key); err != nil {
-			return types.ResponseCheckTx{
-				Code: code.ErrHexDecode.Code,
-				Log:  err.Error(),
-			}
-		}
-		if d, err := strconv.Atoi(tx.Value); err != nil {
-			return types.ResponseCheckTx{
-				Code: code.ErrJsonDecode.Code,
-				Log:  err.Error(),
-			}
-		} else {
-			// power等于10是最高的权限
-			if d > 9 {
+		for k, v := range tx.DecodeValues() {
+			if tx.PubKey != app.GenesisValidator {
 				return types.ResponseCheckTx{
-					Code: code.ErrVerify.Code,
-					Log:  "the node power must be less than 10",
+					Code: code.ErrTransactionVerify.Code,
+					Log:  "Please contact the administrator to add validator",
+				}
+			}
+			if _, err := hex.DecodeString(k); err != nil {
+				return types.ResponseCheckTx{
+					Code: code.ErrHexDecode.Code,
+					Log:  err.Error(),
+				}
+			}
+			if d, err := strconv.Atoi(f("%d", v)); err != nil {
+				return types.ResponseCheckTx{
+					Code: code.ErrJsonDecode.Code,
+					Log:  err.Error(),
+				}
+			} else {
+				// power等于10是最高的权限
+				if d > 9 {
+					return types.ResponseCheckTx{
+						Code: code.ErrVerify.Code,
+						Log:  "the node power must be less than 10",
+					}
 				}
 			}
 		}
