@@ -348,10 +348,10 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 				continue
 			}
 
-			d[string(v)] = 1
+			d[string(v)] = i
 		}
 
-		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
+		res.Value, _ = json.Marshal(d)
 		res.Code = 0
 
 	case "accounts":
@@ -366,11 +366,52 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			}
 
 			if bytes.HasPrefix(v, []byte(cnst.AccountPrefix)) {
-				d[string(v)] = 1
+				d[string(bytes.Trim(v, cnst.AccountPrefix))] = i
 			}
 		}
 
-		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
+		res.Value, _ = json.Marshal(d)
+		res.Code = 0
+	case "metadatas":
+		s := strings.Split(key, ":")
+
+		if len(s) != 2 {
+			res.Code = code.ErrTransactionDecode.Code
+			res.Log = f("error range %s", key)
+			return
+		}
+
+		s_f := s[0]
+		s_t := s[1]
+		i_f, _ := strconv.Atoi(s_f)
+		i_t, _ := strconv.Atoi(s_t)
+
+		// 比较最大值,查询最大值为数据最大高度
+		if i_t > int(state.Size) {
+			i_t = int(state.Size)
+		}
+
+		// 最大查询范围值为1000
+		if i_t-i_f > 1000 {
+			i_t = i_f + 1000
+		}
+
+		d := map[string]int{}
+
+		for i := i_f; i <= i_t; i++ {
+			k := []byte(f("%s%d", dataHeight, i))
+			v := state.db.Get(k)
+
+			if v == nil {
+				continue
+			}
+
+			if bytes.HasPrefix(v, []byte("metadata:")) {
+				d[string(bytes.Trim(v, "metadata:"))] = i
+			}
+		}
+
+		res.Value, _ = json.Marshal(d)
 		res.Code = 0
 
 	default:
