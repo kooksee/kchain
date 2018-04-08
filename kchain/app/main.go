@@ -325,12 +325,17 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			i_t = int(state.Size)
 		}
 
-		// 最大查询范围值为1000
-		if i_t-i_f > 1000 {
-			i_t = i_f + 1000
+		// 当为-1的时候,自动递增100
+		if i_t == -1 {
+			i_t = i_f + 100
 		}
 
-		d := map[string]int{}
+		// 最大查询范围值为100
+		if i_t-i_f > 100 {
+			i_t = i_f + 100
+		}
+
+		d := []map[string]interface{}{}
 
 		for i := i_f; i <= i_t; i++ {
 			k := []byte(f("%s%d", dataHeight, i))
@@ -347,16 +352,18 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			if bytes.HasPrefix(v, []byte(cnst.ValidatorPrefix)) {
 				continue
 			}
-
-			d[string(v)] = i
+			d = append(d, map[string]interface{}{
+				"name":        string(v),
+				"data_height": i,
+			})
 		}
 
-		res.Value, _ = json.Marshal(d)
+		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
 		res.Code = 0
 
 	case "accounts":
 
-		d := map[string]int{}
+		d := []map[string]interface{}{}
 		for i := 0; i <= int(state.Size); i++ {
 			k := []byte(f("%s%d", dataHeight, i))
 			v := state.db.Get(k)
@@ -366,11 +373,14 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			}
 
 			if bytes.HasPrefix(v, []byte(cnst.AccountPrefix)) {
-				d[string(bytes.Trim(v, cnst.AccountPrefix))] = i
+				d = append(d, map[string]interface{}{
+					"name":        string(bytes.Trim(v, cnst.AccountPrefix)),
+					"data_height": i,
+				})
 			}
 		}
 
-		res.Value, _ = json.Marshal(d)
+		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
 		res.Code = 0
 	case "metadatas":
 		s := strings.Split(key, ":")
@@ -391,12 +401,17 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			i_t = int(state.Size)
 		}
 
-		// 最大查询范围值为1000
-		if i_t-i_f > 1000 {
-			i_t = i_f + 1000
+		// 当为-1的时候,自动递增100
+		if i_t == -1 {
+			i_t = i_f + 100
 		}
 
-		d := map[string]int{}
+		// 最大查询范围值为100
+		if i_t-i_f > 100 {
+			i_t = i_f + 100
+		}
+
+		d := []map[string]interface{}{}
 
 		for i := i_f; i <= i_t; i++ {
 			k := []byte(f("%s%d", dataHeight, i))
@@ -407,11 +422,14 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			}
 
 			if bytes.HasPrefix(v, []byte("metadata:")) {
-				d[string(bytes.Trim(v, "metadata:"))] = i
+				d = append(d, map[string]interface{}{
+					"name":        string(bytes.Trim(v, "metadata:")),
+					"data_height": i,
+				})
 			}
 		}
 
-		res.Value, _ = json.Marshal(d)
+		res.Value, _ = json.Marshal(map[string]interface{}{"data": d})
 		res.Code = 0
 
 	default:
