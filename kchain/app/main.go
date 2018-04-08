@@ -337,6 +337,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 
 		d := []map[string]interface{}{}
 
+		m := map[string]int{}
 		for i := i_f; i <= i_t; i++ {
 			k := []byte(f("%s%d", dataHeight, i))
 			v := state.db.Get(k)
@@ -352,6 +353,14 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			if bytes.HasPrefix(v, []byte(cnst.ValidatorPrefix)) {
 				continue
 			}
+
+			_, ok := m[string(v)]
+			if ok {
+				continue
+			}
+			m[string(v)] = 1
+
+
 			d = append(d, map[string]interface{}{
 				"name":        string(v),
 				"data_height": i,
@@ -364,6 +373,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 	case "accounts":
 
 		d := []map[string]interface{}{}
+		m := map[string]int{}
 		for i := 0; i <= int(state.Size); i++ {
 			k := []byte(f("%s%d", dataHeight, i))
 			v := state.db.Get(k)
@@ -373,6 +383,12 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			}
 
 			if bytes.HasPrefix(v, []byte(cnst.AccountPrefix)) {
+				_, ok := m[string(v)]
+				if ok {
+					continue
+				}
+				m[string(v)] = 1
+
 				d = append(d, map[string]interface{}{
 					"name":        string(bytes.Trim(v, cnst.AccountPrefix)),
 					"data_height": i,
@@ -412,7 +428,7 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 		}
 
 		d := []map[string]interface{}{}
-
+		m := map[string]int{}
 		for i := i_f; i <= i_t; i++ {
 			k := []byte(f("%s%d", dataHeight, i))
 			v := state.db.Get(k)
@@ -420,6 +436,13 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			if v == nil {
 				continue
 			}
+
+
+			_, ok := m[string(v)]
+			if ok {
+				continue
+			}
+			m[string(v)] = 1
 
 			if bytes.HasPrefix(v, []byte("metadata:")) {
 				d = append(d, map[string]interface{}{
