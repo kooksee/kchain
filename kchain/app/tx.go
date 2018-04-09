@@ -31,7 +31,6 @@ func (t *Transaction) Verify() error {
 	if t.Signature == "" || t.PubKey == "" {
 		return errors.New("sign or pubkey is null")
 	}
-
 	// 检查发送tx的节点有没有在区块链中
 	if !state.db.Has([]byte(cnst.ValidatorPrefix + t.PubKey)) {
 		return errors.New(f("the node %s does not exist", t.PubKey))
