@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -96,12 +95,12 @@ func (app *PersistentApplication) SetLogger(l log.Logger) {
 // 新节点连接过滤
 func (app *PersistentApplication) PubKeyFilter(pk crypto.PubKey) error {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(pk.Bytes()))
-
-	if !state.db.Has(key) {
-		m := "Please contact the administrator to join the node"
-		logger.Error(m, "key", key)
-		return errors.New(m)
-	}
+	fmt.Println(string(key))
+	// if !state.db.Has(key) {
+	// 	m := "Please contact the administrator to join the node"
+	// 	logger.Error(m, "key", key)
+	// 	return errors.New(m)
+	// }
 	return nil
 }
 
