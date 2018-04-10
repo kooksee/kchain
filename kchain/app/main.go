@@ -163,12 +163,7 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 		for k, v := range tx.DecodeValues() {
 			d, _ := hex.DecodeString(k)
 			d1, _ := strconv.Atoi(f("%d", v))
-			if err := app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)}); err != nil {
-				return types.ResponseDeliverTx{
-					Code: code.ErrValidatorAdd.Code,
-					Log:  err.Error(),
-				}
-			}
+			app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)})
 		}
 	}
 
@@ -360,7 +355,6 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 			}
 			m[string(v)] = 1
 
-
 			d = append(d, map[string]interface{}{
 				"name":        string(v),
 				"data_height": i,
@@ -437,7 +431,6 @@ func (app *PersistentApplication) Query(reqQuery types.RequestQuery) (res types.
 				continue
 			}
 
-
 			_, ok := m[string(v)]
 			if ok {
 				continue
@@ -476,9 +469,7 @@ func (app *PersistentApplication) InitChain(req types.RequestInitChain) types.Re
 			app.GenesisValidator = hex.EncodeToString(v.PubKey)
 		}
 
-		if r := app.updateValidator(v); r != nil {
-			logger.Error("Error updating validators", "r", r.Error())
-		}
+		app.updateValidator(v)
 	}
 	return types.ResponseInitChain{}
 }
@@ -501,51 +492,39 @@ func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.Resp
 // ---------------------------------------------
 
 // 更新validator
-func (app *PersistentApplication) updateValidator(v types.Validator) error {
+func (app *PersistentApplication) updateValidator(v types.Validator) {
 	key := []byte(cnst.ValidatorPrefix + hex.EncodeToString(v.PubKey))
 
 	// power等于-1的时候,开放节点的权限
 	if v.Power == -1 {
-		value := bytes.NewBuffer(make([]byte, 0))
-		if err := types.WriteMessage(&v, value); err != nil {
-			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
-		}
 
-		state.db.Set(key, value.Bytes())
-		state.Size += 1
-		state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), key)
-
+		state.db.SetSync(key, []byte(strconv.Itoa(int(v.Power))))
+		state.Size ++
 		logger.Info("save node ok", "key", key)
 
 		v.Power = 0
 		app.ValUpdates = append(app.ValUpdates, v)
-		return nil
+		return
 	}
 
 	// power等于-2的时候,删除节点
 	if v.Power == -2 {
-		state.db.Delete(key)
+		state.db.DeleteSync(key)
 		logger.Info("delete node ok", "key", key)
 
 		v.Power = 0
 		app.ValUpdates = append(app.ValUpdates, v)
-		return nil
+		return
 	}
 
 	// power小于等于0的时候,删除验证节点
 	if v.Power >= 0 {
-		value := bytes.NewBuffer(make([]byte, 0))
-		if err := types.WriteMessage(&v, value); err != nil {
-			return errors.New(fmt.Sprintf("Error encoding validator: %v", err))
-		}
 
-		state.db.Set(key, value.Bytes())
-		state.Size += 1
-		state.db.Set([]byte(f("%s%d", dataHeight, state.Size)), key)
-
+		state.db.SetSync(key, []byte(strconv.Itoa(int(v.Power))))
+		state.Size ++
 		logger.Info("save node ok", "key", key)
 
 		app.ValUpdates = append(app.ValUpdates, v)
 	}
-	return nil
+	return
 }
