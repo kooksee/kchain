@@ -162,7 +162,7 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 	case "validator":
 		for k, v := range tx.DecodeValues() {
 			d, _ := hex.DecodeString(k)
-			d1, _ := strconv.Atoi(f("%d", v))
+			d1, _ := strconv.Atoi(f("%s", v))
 			app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)})
 		}
 	}
@@ -238,7 +238,7 @@ func (app *PersistentApplication) CheckTx(txBytes []byte) types.ResponseCheckTx 
 					Log:  err.Error(),
 				}
 			}
-			if d, err := strconv.Atoi(f("%d", v)); err != nil {
+			if d, err := strconv.Atoi(f("%s", v)); err != nil {
 				return types.ResponseCheckTx{
 					Code: code.ErrJsonDecode.Code,
 					Log:  err.Error(),
