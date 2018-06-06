@@ -4,8 +4,8 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/tendermint/tmlibs/log"
 
-	kts "kchain/types"
 	kcfg "kchain/types/cfg"
+	kts "kchain/types"
 	"fmt"
 )
 
@@ -21,6 +21,11 @@ func f(format string, a ...interface{}) string {
 }
 
 type Transaction kts.Transaction
+
+func (t *Transaction) Dumps() []byte {
+	d, _ := json.Marshal(t)
+	return d
+}
 
 func NewTransaction() *Transaction {
 	return &Transaction{}

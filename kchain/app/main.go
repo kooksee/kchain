@@ -485,6 +485,25 @@ func (app *PersistentApplication) BeginBlock(req types.RequestBeginBlock) types.
 }
 
 func (app *PersistentApplication) EndBlock(req types.RequestEndBlock) types.ResponseEndBlock {
+
+	if req.Height > 160000 {
+		vs := []types.Validator{}
+		for _, val := range app.ValUpdates {
+			pb := hex.EncodeToString(val.PubKey)
+			if len(pb) != len("AA0492CAF8889D451547A6FA87AE9E9E354253CDBE0B6C5A09015F63AB710036") {
+				continue
+			}
+
+			_, err := crypto.PubKeyFromBytes(val.PubKey)
+			if err != nil {
+				continue
+			}
+
+			vs = append(vs, val)
+		}
+		return types.ResponseEndBlock{ValidatorUpdates: vs}
+	}
+
 	return types.ResponseEndBlock{ValidatorUpdates: app.ValUpdates}
 }
 

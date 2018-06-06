@@ -15,6 +15,7 @@ import (
 
 	kn "github.com/tendermint/tendermint/node"
 	"encoding/hex"
+	"time"
 )
 
 var kcfg = cfg.GetConfig()
@@ -53,6 +54,19 @@ func AddNodeFlags(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
+func checkBlockTime(node *kn.Node) {
+	for {
+		latestHeight := node.BlockStore().Height()
+		latestBlockMeta := node.BlockStore().LoadBlockMeta(latestHeight)
+		latestBlockTime := latestBlockMeta.Header.Time.Unix()
+		if time.Now().Unix()-latestBlockTime > int64(time.Minute*2) {
+			panic("区块同步不一致")
+		}
+
+		time.Sleep(time.Second * 2)
+	}
+}
+
 // NewRunNodeCmd returns the command that allows the CLI to start a
 // node. It can be used with a custom PrivValidator and in-process ABCI application.
 func NewRunNodeCmd() *cobra.Command {
@@ -77,6 +91,8 @@ func NewRunNodeCmd() *cobra.Command {
 				kn.DefaultDBProvider,
 				logger,
 			)
+
+			//go checkBlockTime(n)
 
 			if err != nil {
 				return fmt.Errorf("Failed to create node: %v", err)
