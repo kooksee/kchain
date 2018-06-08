@@ -162,6 +162,17 @@ func (app *PersistentApplication) DeliverTx(txBytes []byte) types.ResponseDelive
 		for k, v := range tx.DecodeValues() {
 			d, _ := hex.DecodeString(k)
 			d1, _ := strconv.Atoi(f("%s", v))
+
+			if state.Height > 210000 {
+				_, err := crypto.PubKeyFromBytes(d)
+				if err != nil {
+					return types.ResponseDeliverTx{
+						Code: code.ErrTransactionDecode.Code,
+						Log:  fmt.Sprintf("请传入pubkey,%s", err.Error()),
+					}
+				}
+			}
+
 			app.updateValidator(types.Validator{PubKey: d, Power: int64(d1)})
 		}
 	}
@@ -272,6 +283,7 @@ func (app *PersistentApplication) Commit() (res types.ResponseCommit) {
 	state.AppHash = appHash
 	state.Height += 1
 	saveState(state)
+
 	return types.ResponseCommit{Data: appHash}
 }
 

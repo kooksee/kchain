@@ -16,6 +16,11 @@ import (
 	kn "github.com/tendermint/tendermint/node"
 	"encoding/hex"
 	"time"
+	"path/filepath"
+	"os"
+	"strings"
+	"sort"
+	"github.com/codeskyblue/go-sh"
 )
 
 var kcfg = cfg.GetConfig()
@@ -55,15 +60,90 @@ func AddNodeFlags(cmd *cobra.Command) *cobra.Command {
 }
 
 func checkBlockTime(node *kn.Node) {
+	logger.Debug("启动备份")
+
 	for {
+		fileNeed := ""
 		latestHeight := node.BlockStore().Height()
 		latestBlockMeta := node.BlockStore().LoadBlockMeta(latestHeight)
-		latestBlockTime := latestBlockMeta.Header.Time.Unix()
-		if time.Now().Unix()-latestBlockTime > int64(time.Minute*2) {
-			panic("区块同步不一致")
+
+		if latestBlockMeta == nil || latestBlockMeta.Header == nil {
+			time.Sleep(time.Minute)
+			continue
 		}
 
-		time.Sleep(time.Second * 2)
+		if node.ConsensusReactor() == nil || node.ConsensusReactor().FastSync() {
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		latestBlockTime := latestBlockMeta.Header.Time.Unix()
+		if time.Now().Unix()-latestBlockTime > int64(time.Minute*2) {
+			logger.Error("区块同步不一致", "latestHeight", latestHeight)
+			panic("重启chain")
+
+			//if err := node.Stop(); err != nil {
+			//	logger.Error("关闭chain失败", "err", err)
+			//	time.Sleep(time.Second * 2)
+			//	continue
+			//}
+			//
+			//if err := node.Start(); err != nil {
+			//	logger.Error("启动chain失败", "err", err)
+			//	time.Sleep(time.Second * 2)
+			//	continue
+			//}
+
+			//time.Sleep(time.Minute)
+			//continue
+		}
+
+		dataFilePath := make([]string, 0)
+		filepath.Walk(kcfg().Config.RootDir, func(path string, fi os.FileInfo, err error) error {
+
+			// 过滤kdata/data
+			if !strings.Contains(path, "kdata/data") {
+				return nil
+			}
+
+			// 过滤后缀
+			if strings.Contains(path, ".") {
+				return nil
+			}
+
+			// 过滤文件
+			if !fi.IsDir() {
+				return nil
+			}
+
+			fs := strings.Split(fi.Name(), "_")
+			if len(fs) != 2 {
+				return nil
+			}
+
+			dataFilePath = append(dataFilePath, path)
+			return nil
+		})
+
+		if len(dataFilePath) > 5 {
+			sort.Strings(dataFilePath)
+			fileNeed = dataFilePath[0]
+			if err := sh.Command("rm", "-rf", fileNeed).Run(); err != nil {
+				logger.Error(err.Error())
+				time.Sleep(time.Second * 2)
+				continue
+			}
+		}
+
+		fileNeed = filepath.Join(kcfg().Config.RootDir, fmt.Sprintf("data_%d", latestHeight))
+
+		if err := sh.Command("cp", "-rf", filepath.Join(kcfg().Config.RootDir, "data"), fileNeed).Run(); err != nil {
+			time.Sleep(time.Second * 2)
+			logger.Error(err.Error())
+			continue
+		}
+
+		time.Sleep(time.Minute * 10)
 	}
 }
 
@@ -92,7 +172,7 @@ func NewRunNodeCmd() *cobra.Command {
 				logger,
 			)
 
-			//go checkBlockTime(n)
+			go checkBlockTime(n)
 
 			if err != nil {
 				return fmt.Errorf("Failed to create node: %v", err)
