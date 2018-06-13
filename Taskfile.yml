@@ -19,7 +19,7 @@ init:
 build:
   desc: 编译应用
   cmds:
-    - GOPATH=`pwd` GOBIN=`pwd` go install kchain/cmd/main.go
+    - GOPATH=`pwd` GOBIN=`pwd` go install src/kchain/cmd/main.go
 
 dev:
   desc: 编译应用
@@ -29,7 +29,7 @@ dev:
 build_linux:
   desc: 交叉编译成linux应用
   cmds:
-    - GOPATH=`pwd` GOBIN=`pwd` CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install kchain/cmd/main.go
+    - GOPATH=`pwd` GOBIN=`pwd` CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install src/kchain/cmd/main.go
 
 
 docker_build:
