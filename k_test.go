@@ -13,7 +13,7 @@ func TestFile(t *testing.T) {
 	dataFilePath := make([]string, 0)
 
 	filepath.Walk("kdata", func(path string, fi os.FileInfo, err error) error {
-		if strings.Contains(path, "kdata/data") && fi.IsDir() && !strings.Contains(path, "."){
+		if strings.Contains(path, "kdata/data") && fi.IsDir() && !strings.Contains(path, ".") {
 			fmt.Println(path)
 			return nil
 		}
